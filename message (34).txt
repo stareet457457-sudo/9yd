@@ -1,0 +1,769 @@
+local Players             = game:GetService("Players")
+local UserInputService    = game:GetService("UserInputService")
+local TweenService        = game:GetService("TweenService")
+local RunService          = game:GetService("RunService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local HttpService         = game:GetService("HttpService")
+local ReplicatedStorage   = game:GetService("ReplicatedStorage")
+local CoreGui             = game:GetService("CoreGui")
+local LocalPlayer         = Players.LocalPlayer
+local Camera              = workspace.CurrentCamera
+
+-- ============================================
+-- 🛡️ Fast Hub Anti-Cheat Bypass
+-- ============================================
+if getgenv then getgenv().identifyexecutor = nil end
+if getfenv then getfenv().identifyexecutor = nil end
+
+pcall(function()
+    local modules = ReplicatedStorage:FindFirstChild("Modules")
+    if modules and modules:FindFirstChild("Game") then
+        local ui = modules.Game:FindFirstChild("UI")
+        if ui and ui:FindFirstChild("TransitionUI") then
+            local TransitionUI = require(ui.TransitionUI)
+            TransitionUI.transition = function(...) end
+        end
+        local charCreator = modules.Game:FindFirstChild("CharacterCreator")
+        if charCreator and charCreator:FindFirstChild("CharacterCreator") then
+            local CharacterCreator = require(charCreator.CharacterCreator)
+            if CharacterCreator.start then
+                CharacterCreator.start = function() while true do task.wait(1) end end
+            end
+        end
+    end
+end)
+
+-- ============================================
+-- ⚙️ الإعدادات الأساسية
+-- ============================================
+local AUTO_FISHING_ENABLED    = false
+local AUTO_SKIP_ENABLED       = false
+local AUTO_DROP_ENABLED       = false
+local SKIP_BAD_FISH_ENABLED   = true   -- 🐟 تصفية الأسماك الخايسة
+local SKIP_TIMER_SECONDS      = 11.85
+local WAIT_BEFORE_RECAST      = 0.1    -- ⚡ رمي سريع جداً (0.1 ثانية)
+local DROP_DELAY              = 0.10
+local SKIP_DELAY              = 0.2    -- ⚡ تأخير سريع بعد الفوز (0.2 ثانية)
+local ANTI_NOFISHING_TIMEOUT  = 0.7
+local WEBHOOK_URL             = ""
+local CONFIG_FILE             = "MZN_Config.json"
+
+local currentKeybind          = Enum.KeyCode.F
+local isListeningForKey       = false
+local worldTarget             = nil
+local isPickingTarget         = false
+local MAX_CAST_RETRIES        = 5
+local espHidden               = false
+
+-- Configuration par poisson (keep + notify + drop)
+local fishSettings = {
+    ["Bass"]          = {keep = true,  drop = false, notify = true},
+    ["Perch"]         = {keep = true,  drop = false, notify = true},
+    ["Salmon"]        = {keep = true,  drop = false, notify = true},
+    ["Northern Pike"] = {keep = true,  drop = false, notify = true},
+    ["Dolphinfish"]   = {keep = true,  drop = false, notify = true},
+    ["Coelacanth"]    = {keep = true,  drop = false, notify = true},
+    ["Tuna"]          = {keep = true,  drop = false, notify = true},
+    ["Sailfish"]      = {keep = true,  drop = false, notify = true},
+    ["Marlin"]        = {keep = true,  drop = false, notify = true},
+}
+
+-- Couleurs personnalisées pour le texte des poissons
+local fishColors = {
+    ["Marlin"]        = Color3.fromRGB(255, 165, 0),  -- Orange/Doré
+    ["Coelacanth"]    = Color3.fromRGB(80, 140, 255), -- Bleu
+    ["Sailfish"]      = Color3.fromRGB(255, 165, 0),  -- Orange/Doré
+    ["Northern Pike"] = Color3.fromRGB(80, 255, 80),   -- Vert
+    ["Salmon"]        = Color3.fromRGB(200, 200, 200), -- Gris/Blanc
+    ["Tuna"]          = Color3.fromRGB(170, 90, 255),  -- Violet
+    ["Perch"]         = Color3.fromRGB(200, 200, 200), -- Gris/Blanc
+    ["Dolphinfish"]   = Color3.fromRGB(80, 255, 80),   -- Vert
+    ["Bass"]          = Color3.fromRGB(180, 180, 180), -- Gris
+}
+
+local espFishList = {
+    ["Bass"]=true,["Coelacanth"]=true,["Dolphinfish"]=true,
+    ["Marlin"]=true,["Northern Pike"]=true,["Perch"]=true,
+    ["Sailfish"]=true,["Salmon"]=true,["Tuna"]=true,
+}
+
+local BG_IMAGE_ID = "rbxassetid://98382789768480"
+local C = { white = Color3.fromRGB(255,255,255), gray = Color3.fromRGB(160,160,160), dark = Color3.fromRGB(0,0,0) }
+
+-- ============================================
+-- 🔔 نظام Discord Webhook المطور (Strict Anti-Spam)
+-- ============================================
+local lastSentTime = 0
+local lastFishSent = ""
+local isSendingWebhook = false
+
+local function sendDiscordNotification(fishName, isTest)
+    if WEBHOOK_URL == "" or not string.find(WEBHOOK_URL, "http") then return false end
+    local currentTime = tick()
+
+    if not isTest then
+        if isSendingWebhook or (fishName == lastFishSent and (currentTime - lastSentTime) < 8) or (currentTime - lastSentTime) < 3 then
+            return false
+        end
+        isSendingWebhook = true
+        lastSentTime = currentTime
+        lastFishSent = fishName
+    end
+
+    local requestFunc = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+    if not requestFunc then
+        warn("Executer does not support HTTP requests!")
+        if not isTest then isSendingWebhook = false end
+        return false
+    end
+
+    local data = {
+        ["embeds"] = {{
+            ["title"] = isTest and "🧪 Webhook Test Success!" or "🎣 Fish Caught!",
+            ["description"] = isTest and "الويب هوك شغال 100% يالذيب!" or "Player **" .. LocalPlayer.Name .. "** caught a fish!",
+            ["color"] = isTest and 16766720 or 65280,
+            ["fields"] = {{["name"] = "Fish Name", ["value"] = "**" .. fishName .. "**", ["inline"] = true}},
+            ["footer"] = {["text"] = "MZN Ultimate • " .. os.date("%X")}
+        }}
+    }
+
+    local success, err = pcall(function()
+        requestFunc({
+            Url = WEBHOOK_URL,
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/json"},
+            Body = HttpService:JSONEncode(data)
+        })
+    end)
+
+    if not isTest then
+        task.delay(2, function() isSendingWebhook = false end)
+    end
+
+    return success
+end
+
+-- ============================================
+-- 🙈 إخفاء الاسم & ESP
+-- ============================================
+local function hideLocalPlayerName()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None end
+    for _, child in ipairs(char:GetDescendants()) do
+        if child:IsA("TextLabel") or child:IsA("TextBox") then
+            local lname, ltext = string.lower(child.Name), string.lower(child.Text)
+            if string.find(lname,"tag") or string.find(lname,"name") or ltext == string.lower(LocalPlayer.Name) or ltext == string.lower(LocalPlayer.DisplayName) then child.Text = ""; child.Visible = false end
+        elseif child:IsA("BillboardGui") then
+            if string.find(string.lower(child.Name),"tag") or string.find(string.lower(child.Name),"name") then child.Enabled = false end
+        end
+    end
+end
+task.spawn(function() while task.wait(0.3) do hideLocalPlayerName() end end)
+LocalPlayer.CharacterAdded:Connect(function(char) char:WaitForChild("Humanoid"); hideLocalPlayerName() end)
+
+if CoreGui:FindFirstChild("FishESPHolder") then CoreGui.FishESPHolder:Destroy() end
+local espHolder = Instance.new("Folder", CoreGui); espHolder.Name = "FishESPHolder"
+local activeBillboards, activeHighlights = {}, {}
+
+local function attachBillboard(part, text)
+    if not part or not part:IsA("BasePart") then return end
+    if activeBillboards[part] then activeBillboards[part].TextLabel.Text = "["..tostring(text).."]"; return activeBillboards[part] end
+    local bb = Instance.new("BillboardGui"); bb.Name = "FishESP"; bb.Adornee = part; bb.Size = UDim2.new(0,150,0,40); bb.StudsOffset = Vector3.new(0,2,0); bb.AlwaysOnTop = true
+    local label = Instance.new("TextLabel", bb); label.Size = UDim2.new(1,0,1,0); label.BackgroundTransparency = 1; label.TextColor3 = C.white; label.TextStrokeColor3 = C.dark; label.TextStrokeTransparency = 0; label.Font = Enum.Font.SourceSansBold; label.TextSize = 20; label.Text = "["..tostring(text).."]"
+    bb.Parent = espHolder; activeBillboards[part] = bb; return bb
+end
+
+local function attachHighlight(target)
+    if not target or activeHighlights[target] then return end
+    local hl = Instance.new("Highlight", target); hl.Name = "FishHighlight"; hl.Adornee = target; hl.FillColor = Color3.fromRGB(0,255,255); hl.FillTransparency = 0.2; hl.OutlineColor = C.white; hl.OutlineTransparency = 0; activeHighlights[target] = hl
+end
+
+local function removeEffects(target)
+    if activeBillboards[target] then activeBillboards[target]:Destroy(); activeBillboards[target] = nil end
+    if activeHighlights[target] then activeHighlights[target]:Destroy(); activeHighlights[target] = nil end
+end
+
+local function handleDroppedItem(item)
+    if not espFishList[item.Name] then return end
+    local part = item:IsA("BasePart") and item or item:FindFirstChildWhichIsA("BasePart", true)
+    if part then attachBillboard(part, item.Name); attachHighlight(item) end
+end
+
+task.spawn(function()
+    local droppedItems = workspace:WaitForChild("DroppedItems", 5)
+    if droppedItems then
+        for _, item in ipairs(droppedItems:GetChildren()) do handleDroppedItem(item) end
+        droppedItems.ChildAdded:Connect(handleDroppedItem)
+    end
+end)
+
+-- Détection du poisson hooked
+local function getHookedFishName()
+    local char = LocalPlayer.Character
+    if not char then return nil end
+
+    for _, v in ipairs(char:GetDescendants()) do
+        if (v:IsA("StringValue") or v:IsA("ObjectValue")) and fishSettings[tostring(v.Value)] ~= nil then
+            return tostring(v.Value)
+        end
+        for attrName, attrVal in pairs(v:GetAttributes()) do
+            if fishSettings[tostring(attrVal)] ~= nil then
+                return tostring(attrVal)
+            end
+        end
+    end
+
+    local pGui = LocalPlayer:FindFirstChild("PlayerGui")
+    if pGui then
+        for _, gui in ipairs(pGui:GetChildren()) do
+            local gName = gui.Name:lower()
+            if string.find(gName, "fish") or string.find(gName, "reel") or string.find(gName, "hook") or string.find(gName, "minigame") then
+                for _, v in ipairs(gui:GetDescendants()) do
+                    if v:IsA("TextLabel") and v.Visible then
+                        for fName, _ in pairs(fishSettings) do
+                            if string.find(v.Text, fName) then
+                                return fName
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return nil
+end
+
+local function findActiveBobber()
+    local char = LocalPlayer.Character; if not char then return nil end
+    local tool = char:FindFirstChildWhichIsA("Tool"); if not tool then return nil end
+    for _, obj in ipairs(tool:GetDescendants()) do
+        if obj:IsA("RopeConstraint") or obj:IsA("Beam") then if obj.Attachment1 and obj.Attachment1.Parent and obj.Attachment1.Parent:IsA("BasePart") then return obj.Attachment1.Parent end end
+    end
+    local hrp = char:FindFirstChild("HumanoidRootPart"); if not hrp then return nil end
+    for _, obj in ipairs(workspace:GetChildren()) do
+        if obj:IsA("BasePart") and not obj:IsDescendantOf(char) and obj.Name ~= "DroppedItems" then
+            local lname = obj.Name:lower()
+            if string.find(lname,"bobber") or string.find(lname,"hook") or string.find(lname,"bait") then
+                local dist = (obj.Position - hrp.Position).Magnitude
+                if dist > 3 and dist < 45 then return obj end
+            end
+        end
+    end
+    return nil
+end
+
+local currentBobber = nil
+task.spawn(function()
+    while true do
+        task.wait(0.1)
+        local bobber = findActiveBobber()
+        if bobber then
+            if currentBobber ~= bobber then if currentBobber then removeEffects(currentBobber) end; currentBobber = bobber end
+            attachBillboard(bobber, getHookedFishName() or "Fishing..."); attachHighlight(bobber)
+        else
+            if currentBobber then removeEffects(currentBobber); currentBobber = nil end
+        end
+    end
+end)
+
+local fishESPBillboard = nil
+local function makeESP(target, fishName)
+    if fishESPBillboard then fishESPBillboard:Destroy() end
+    local bb = Instance.new("BillboardGui"); bb.Size = UDim2.new(0,130,0,50); bb.StudsOffset = Vector3.new(0,2.5,0); bb.AlwaysOnTop = true; bb.Adornee = target; bb.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    local bg = Instance.new("Frame", bb); bg.Size = UDim2.new(1,0,1,0); bg.BackgroundColor3 = C.dark; bg.BackgroundTransparency = 0.3; bg.BorderSizePixel = 0; Instance.new("UICorner", bg).CornerRadius = UDim.new(0,6); Instance.new("UIStroke", bg).Color = C.white; Instance.new("UIStroke", bg).Thickness = 1.5
+    local lbl = Instance.new("TextLabel", bg); lbl.Size = UDim2.new(1,-4,0.6,0); lbl.Position = UDim2.new(0,2,0,2); lbl.BackgroundTransparency = 1; lbl.Text = "🐟 " .. fishName; lbl.TextColor3 = fishColors[fishName] or C.white; lbl.Font = Enum.Font.GothamBold; lbl.TextSize = 12
+    local sub = Instance.new("TextLabel", bg); sub.Size = UDim2.new(1,-4,0.4,0); sub.Position = UDim2.new(0,2,0.6,0); sub.BackgroundTransparency = 1; sub.Text = "⚡ FISH ON!"; sub.TextColor3 = C.gray; sub.Font = Enum.Font.Gotham; sub.TextSize = 10
+    fishESPBillboard = bb
+end
+local function clearFishESP() if fishESPBillboard then fishESPBillboard:Destroy(); fishESPBillboard = nil end end
+
+-- ============================================
+-- 🗑️ Auto Drop (ثابت ومستقل)
+-- ============================================
+local Core = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Core")
+local GameModules = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Game")
+local Data = require(Core:WaitForChild("Data"))
+local Net = require(Core:WaitForChild("Net"))
+local ItemUtils = require(GameModules:WaitForChild("Inventory"):WaitForChild("ItemUtils"))
+
+local function dropItem(guid) if guid then pcall(function() Net.send("drop_item", guid, 1) end) end end
+
+task.spawn(function()
+    while true do
+        task.wait(0.5)
+        if AUTO_DROP_ENABLED then
+            local itemsToDrop = {}
+            pcall(function()
+                ItemUtils.iterate_through_items(Data, function(item)
+                    if item and item.guid and item.name and fishSettings[item.name] and fishSettings[item.name].drop then
+                        table.insert(itemsToDrop, {guid = item.guid, amount = item.amount or 1})
+                    end
+                end)
+            end)
+
+            for _, data in ipairs(itemsToDrop) do
+                if not AUTO_DROP_ENABLED then break end
+                for i = 1, data.amount do
+                    if not AUTO_DROP_ENABLED then break end
+                    dropItem(data.guid)
+                    task.wait(DROP_DELAY)
+                end
+            end
+        end
+    end
+end)
+
+-- ============================================
+-- 💾 الحفظ والتحميل
+-- ============================================
+local function saveConfig()
+    local config = {
+        skipTimer = SKIP_TIMER_SECONDS, recastWait = WAIT_BEFORE_RECAST, keybind = currentKeybind.Name,
+        worldX = worldTarget and worldTarget.X or nil, worldY = worldTarget and worldTarget.Y or nil, worldZ = worldTarget and worldTarget.Z or nil,
+        fSettings = fishSettings, webhook = WEBHOOK_URL, dropDelay = DROP_DELAY, skipDelay = SKIP_DELAY,
+        skipBadFish = SKIP_BAD_FISH_ENABLED
+    }
+    return pcall(function() writefile(CONFIG_FILE, HttpService:JSONEncode(config)) end)
+end
+
+local function loadConfig()
+    local ok, data = pcall(function() if isfile and isfile(CONFIG_FILE) then return HttpService:JSONDecode(readfile(CONFIG_FILE)) end end)
+    if ok and data then
+        SKIP_TIMER_SECONDS = data.skipTimer or SKIP_TIMER_SECONDS; WAIT_BEFORE_RECAST = data.recastWait or WAIT_BEFORE_RECAST
+        DROP_DELAY = data.dropDelay or DROP_DELAY; SKIP_DELAY = data.skipDelay or SKIP_DELAY
+        WEBHOOK_URL = data.webhook or WEBHOOK_URL
+        if data.skipBadFish ~= nil then SKIP_BAD_FISH_ENABLED = data.skipBadFish end
+        if data.worldX then worldTarget = Vector3.new(data.worldX, data.worldY, data.worldZ) end
+        if data.fSettings then
+            for k, v in pairs(data.fSettings) do
+                if fishSettings[k] then
+                    fishSettings[k].drop   = v.drop   ~= nil and v.drop   or fishSettings[k].drop
+                    fishSettings[k].notify = v.notify ~= nil and v.notify or fishSettings[k].notify
+                    fishSettings[k].keep   = v.keep   ~= nil and v.keep   or fishSettings[k].keep
+                end
+            end
+        end
+    end
+end
+loadConfig()
+
+-- ============================================
+-- buhlal skip
+-- ============================================
+local sliderLastClick = 0
+
+RunService.RenderStepped:Connect(function()
+    if not AUTO_SKIP_ENABLED then return end
+    if tick() - sliderLastClick < 0.30 then return end
+
+    local PlayerGui = LocalPlayer:FindFirstChild("PlayerGui")
+    if not PlayerGui then return end
+
+    local SliderMinigame = PlayerGui:FindFirstChild("SliderMinigame")
+    if not SliderMinigame or not SliderMinigame.Enabled then return end
+
+    local Indicator, GreenZone
+
+    for _, obj in ipairs(SliderMinigame:GetDescendants()) do
+        if obj:IsA("Frame") and obj.Visible then
+            local size = obj.AbsoluteSize
+            if size.X >= 1 and size.X <= 15 and size.Y >= 20 then
+                Indicator = obj
+            elseif size.X > 15 and size.Y >= 20 then
+                if obj.BackgroundColor3 ~= Color3.fromRGB(40, 40, 40) then
+                    GreenZone = obj
+                end
+            end
+        end
+    end
+
+    if Indicator and GreenZone then
+        local indX      = Indicator.AbsolutePosition.X
+        local zoneLeft  = GreenZone.AbsolutePosition.X
+        local zoneRight = zoneLeft + GreenZone.AbsoluteSize.X
+
+        if indX >= zoneLeft and indX <= zoneRight then
+            local cx = Camera.ViewportSize.X / 2
+            local cy = Camera.ViewportSize.Y / 2
+
+            VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, true,  game, 1)
+            VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, false, game, 1)
+
+            sliderLastClick = tick()
+        end
+    end
+end)
+
+-- ============================================
+-- 🖥️ بناء الـ GUI (MZN Cyberpunk Style)
+-- ============================================
+if LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("MZN_Hub") then LocalPlayer.PlayerGui.MZN_Hub:Destroy() end
+local screenGui = Instance.new("ScreenGui"); screenGui.Name = "MZN_Hub"; screenGui.ResetOnSpawn = false; screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local main = Instance.new("Frame"); main.Size = UDim2.new(0,290,0,305); main.Position = UDim2.new(0.5,-145,0.5,-152); main.BackgroundColor3 = C.dark; main.BackgroundTransparency = 0.3; main.BorderSizePixel = 0; main.ClipsDescendants = true; main.Parent = screenGui; Instance.new("UICorner", main).CornerRadius = UDim.new(0,14)
+local mainStroke = Instance.new("UIStroke", main); mainStroke.Color = C.white; mainStroke.Thickness = 1.2; mainStroke.Transparency = 0.6
+local bgImg = Instance.new("ImageLabel", main); bgImg.Size = UDim2.new(1,0,1,0); bgImg.BackgroundTransparency = 1; bgImg.Image = BG_IMAGE_ID; bgImg.ImageTransparency = 0.1; bgImg.ScaleType = Enum.ScaleType.Crop; bgImg.ZIndex = 1; Instance.new("UICorner", bgImg).CornerRadius = UDim.new(0,14)
+local dimLayer = Instance.new("Frame", main); dimLayer.Size = UDim2.new(1,0,1,0); dimLayer.BackgroundColor3 = C.dark; dimLayer.BackgroundTransparency = 0.5; dimLayer.BorderSizePixel = 0; dimLayer.ZIndex = 2; Instance.new("UICorner", dimLayer).CornerRadius = UDim.new(0,14)
+
+local titleBar = Instance.new("Frame", main); titleBar.Size = UDim2.new(1,0,0,48); titleBar.BackgroundColor3 = C.dark; titleBar.BackgroundTransparency = 0.2; titleBar.BorderSizePixel = 0; titleBar.ZIndex = 3; Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0,14)
+local tf2 = Instance.new("Frame", titleBar); tf2.Size = UDim2.new(1,0,0.5,0); tf2.Position = UDim2.new(0,0,0.5,0); tf2.BackgroundColor3 = C.dark; tf2.BackgroundTransparency = 0.2; tf2.BorderSizePixel = 0; tf2.ZIndex = 3
+local titleLbl = Instance.new("TextLabel", titleBar); titleLbl.Size = UDim2.new(1,-200,1,0); titleLbl.Position = UDim2.new(0,14,0,0); titleLbl.BackgroundTransparency = 1; titleLbl.Text = "M  Z  N"; titleLbl.TextColor3 = C.white; titleLbl.Font = Enum.Font.Antique; titleLbl.TextSize = 22; titleLbl.TextXAlignment = Enum.TextXAlignment.Left; titleLbl.ZIndex = 4
+
+local function makeTopBtn(text, rightOffset)
+    local btn = Instance.new("TextButton", titleBar); btn.Size = UDim2.new(0,28,0,28); btn.Position = UDim2.new(1, -rightOffset, 0, 10); btn.BackgroundColor3 = Color3.fromRGB(40,40,40); btn.BackgroundTransparency = 0.2; btn.Text = text; btn.TextColor3 = C.white; btn.TextSize = 13; btn.Font = Enum.Font.GothamBold; btn.ZIndex = 5; Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6); return btn
+end
+local closeBtn = makeTopBtn("✕", 34); local minBtn = makeTopBtn("—", 66); local saveBtn = makeTopBtn("💾", 98)
+local dropFilterBtn = makeTopBtn("🗑️", 130)
+local webBtn       = makeTopBtn("🔔", 162)
+local settingBtn   = makeTopBtn("⚙️", 194)
+
+local whiteLine = Instance.new("Frame", main); whiteLine.Size = UDim2.new(1,0,0,1); whiteLine.Position = UDim2.new(0,0,0,48); whiteLine.BackgroundColor3 = C.white; whiteLine.BackgroundTransparency = 0.7; whiteLine.BorderSizePixel = 0; whiteLine.ZIndex = 4
+
+local content = Instance.new("Frame", main); content.Size = UDim2.new(1,-18,1,-58); content.Position = UDim2.new(0,9,0,54); content.BackgroundTransparency = 1; content.ZIndex = 4
+local lay = Instance.new("UIListLayout", content); lay.Padding = UDim.new(0,7); lay.SortOrder = Enum.SortOrder.LayoutOrder; lay.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+local function makeBtn(text, order)
+    local btn = Instance.new("TextButton", content); btn.Size = UDim2.new(1,0,0,36); btn.BackgroundColor3 = C.white; btn.BackgroundTransparency = 0.88; btn.Text = text; btn.TextColor3 = C.white; btn.TextSize = 13; btn.Font = Enum.Font.GothamBold; btn.LayoutOrder = order or 0; btn.ZIndex = 5; Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8); local s = Instance.new("UIStroke", btn); s.Color = C.white; s.Thickness = 0.8; s.Transparency = 0.7; return btn
+end
+
+local fishToggle = makeBtn("AUTO FARM: OFF", 1)
+local targetContainer = Instance.new("Frame", content); targetContainer.Size = UDim2.new(1,0,0,36); targetContainer.BackgroundTransparency = 1; targetContainer.LayoutOrder = 2; targetContainer.ZIndex = 4
+local pickBtn = Instance.new("TextButton", targetContainer); pickBtn.Size = UDim2.new(0.61,0,1,0); pickBtn.BackgroundColor3 = C.white; pickBtn.BackgroundTransparency = 0.88; pickBtn.Text = "SET CAST POINT"; pickBtn.TextColor3 = C.white; pickBtn.TextSize = 11; pickBtn.Font = Enum.Font.GothamBold; pickBtn.ZIndex = 5; Instance.new("UICorner", pickBtn).CornerRadius = UDim.new(0,8); Instance.new("UIStroke", pickBtn).Color = C.white; Instance.new("UIStroke", pickBtn).Thickness = 0.8; Instance.new("UIStroke", pickBtn).Transparency = 0.7
+local hideTargetBtn = Instance.new("TextButton", targetContainer); hideTargetBtn.Size = UDim2.new(0.36,0,1,0); hideTargetBtn.Position = UDim2.new(0.64,0,0,0); hideTargetBtn.BackgroundColor3 = C.white; hideTargetBtn.BackgroundTransparency = 0.7; hideTargetBtn.Text = "HIDE ESP"; hideTargetBtn.TextColor3 = C.dark; hideTargetBtn.TextSize = 11; hideTargetBtn.Font = Enum.Font.GothamBold; hideTargetBtn.ZIndex = 5; Instance.new("UICorner", hideTargetBtn).CornerRadius = UDim.new(0,8)
+local skipBtn = makeBtn("AUTO SKIP: OFF", 3)
+local badFishBtn = makeBtn("SKIP BAD FISH: ON", 4)
+local dropBtn = makeBtn("AUTO DROP: OFF", 5)
+local coordsLabel = Instance.new("TextLabel", content); coordsLabel.Size = UDim2.new(1,0,0,18); coordsLabel.BackgroundTransparency = 1; coordsLabel.Text = worldTarget and string.format("📍 %.0f, %.0f, %.0f", worldTarget.X, worldTarget.Y, worldTarget.Z) or "📍 No target set"; coordsLabel.TextColor3 = C.gray; coordsLabel.TextSize = 10; coordsLabel.Font = Enum.Font.Gotham; coordsLabel.LayoutOrder = 6; coordsLabel.ZIndex = 5
+
+local fishNames = {}; for f in pairs(fishSettings) do table.insert(fishNames, f) end; table.sort(fishNames)
+
+-- ============================================
+-- 1. نافذة الإعدادات (فوق) - Delays فقط
+-- ============================================
+local settingsWin = Instance.new("Frame", screenGui); settingsWin.Size = UDim2.new(0,200,0,110); settingsWin.BackgroundColor3 = Color3.fromRGB(12,12,12); settingsWin.BackgroundTransparency = 0.05; settingsWin.BorderSizePixel = 0; settingsWin.Visible = false; settingsWin.ZIndex = 50; Instance.new("UICorner", settingsWin).CornerRadius = UDim.new(0,10); Instance.new("UIStroke", settingsWin).Color = C.white; Instance.new("UIStroke", settingsWin).Thickness = 1.2; Instance.new("UIStroke", settingsWin).Transparency = 0.6
+local swTitle = Instance.new("TextLabel", settingsWin); swTitle.Size = UDim2.new(1,0,0,30); swTitle.BackgroundTransparency = 1; swTitle.Text = "DELAYS ⚙️"; swTitle.TextColor3 = C.white; swTitle.Font = Enum.Font.GothamBold; swTitle.TextSize = 13; swTitle.ZIndex = 51
+local swLine = Instance.new("Frame", settingsWin); swLine.Size = UDim2.new(1,0,0,1); swLine.Position = UDim2.new(0,0,0,30); swLine.BackgroundColor3 = C.white; swLine.BackgroundTransparency = 0.7; swLine.BorderSizePixel = 0; swLine.ZIndex = 51
+local swContent = Instance.new("Frame", settingsWin); swContent.Size = UDim2.new(1,-10,1,-40); swContent.Position = UDim2.new(0,5,0,35); swContent.BackgroundTransparency = 1; swContent.ZIndex = 51
+local swLay = Instance.new("UIListLayout", swContent); swLay.Padding = UDim.new(0,5)
+
+local function makeSpeedRow(parent, labelText, getValue, setValue, step, minVal, maxVal, fmt)
+    local row = Instance.new("Frame", parent); row.Size = UDim2.new(1,0,0,28); row.BackgroundColor3 = C.white; row.BackgroundTransparency = 0.88; row.BorderSizePixel = 0; row.ZIndex = 52; Instance.new("UICorner", row).CornerRadius = UDim.new(0,6)
+    local lbl = Instance.new("TextLabel", row); lbl.Size = UDim2.new(0.5,0,1,0); lbl.Position = UDim2.new(0,5,0,0); lbl.BackgroundTransparency = 1; lbl.Text = labelText; lbl.TextColor3 = C.white; lbl.Font = Enum.Font.GothamBold; lbl.TextSize = 10; lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.ZIndex = 53
+    local minusBt = Instance.new("TextButton", row); minusBt.Size = UDim2.new(0,20,0,20); minusBt.Position = UDim2.new(1,-70,0,4); minusBt.BackgroundColor3 = Color3.fromRGB(50,50,50); minusBt.BackgroundTransparency = 0.3; minusBt.Text = "−"; minusBt.TextColor3 = C.white; minusBt.TextSize = 14; minusBt.Font = Enum.Font.GothamBold; minusBt.ZIndex = 54; Instance.new("UICorner", minusBt).CornerRadius = UDim.new(0,4)
+    local valLbl = Instance.new("TextLabel", row); valLbl.Size = UDim2.new(0,30,1,0); valLbl.Position = UDim2.new(1,-48,0,0); valLbl.BackgroundTransparency = 1; valLbl.Text = string.format(fmt, getValue()); valLbl.TextColor3 = C.white; valLbl.Font = Enum.Font.GothamBold; valLbl.TextSize = 10; valLbl.ZIndex = 53
+    local plusBt = Instance.new("TextButton", row); plusBt.Size = UDim2.new(0,20,0,20); plusBt.Position = UDim2.new(1,-16,0,4); plusBt.BackgroundColor3 = Color3.fromRGB(50,50,50); plusBt.BackgroundTransparency = 0.3; plusBt.Text = "+"; plusBt.TextColor3 = C.white; plusBt.TextSize = 14; plusBt.Font = Enum.Font.GothamBold; plusBt.ZIndex = 54; Instance.new("UICorner", plusBt).CornerRadius = UDim.new(0,4)
+    local function refresh() valLbl.Text = string.format(fmt, getValue()) end
+    minusBt.MouseButton1Click:Connect(function() setValue(math.max(minVal, math.floor((getValue() - step) * 100 + 0.5) / 100)); refresh() end)
+    plusBt.MouseButton1Click:Connect(function() setValue(math.min(maxVal, math.floor((getValue() + step) * 100 + 0.5) / 100)); refresh() end)
+end
+makeSpeedRow(swContent, "SKIP DELAY:", function() return SKIP_DELAY end, function(v) SKIP_DELAY = v end, 0.05, 0.0, 15.0, "%.2fs")
+makeSpeedRow(swContent, "DROP DELAY:", function() return DROP_DELAY end, function(v) DROP_DELAY = v end, 0.05, 0.05, 5.0, "%.2fs")
+
+-- ============================================
+-- 2. نافذة الفلتر (تحت) - للـ Auto Drop
+-- ============================================
+local filterWin = Instance.new("Frame", screenGui); filterWin.Size = UDim2.new(0,200,0,255); filterWin.BackgroundColor3 = Color3.fromRGB(12,12,12); filterWin.BackgroundTransparency = 0.05; filterWin.BorderSizePixel = 0; filterWin.Visible = false; filterWin.ZIndex = 50; Instance.new("UICorner", filterWin).CornerRadius = UDim.new(0,10); Instance.new("UIStroke", filterWin).Color = C.white; Instance.new("UIStroke", filterWin).Thickness = 1.2; Instance.new("UIStroke", filterWin).Transparency = 0.6
+local fwTitle = Instance.new("TextLabel", filterWin); fwTitle.Size = UDim2.new(1,0,0,30); fwTitle.BackgroundTransparency = 1; fwTitle.Text = "FILTER DROP 🗑️"; fwTitle.TextColor3 = C.white; fwTitle.Font = Enum.Font.GothamBold; fwTitle.TextSize = 13; fwTitle.ZIndex = 51
+local fwLine = Instance.new("Frame", filterWin); fwLine.Size = UDim2.new(1,0,0,1); fwLine.Position = UDim2.new(0,0,0,30); fwLine.BackgroundColor3 = C.white; fwLine.BackgroundTransparency = 0.7; fwLine.BorderSizePixel = 0; fwLine.ZIndex = 51
+local scrollDrop = Instance.new("ScrollingFrame", filterWin); scrollDrop.Size = UDim2.new(1,-10,1,-40); scrollDrop.Position = UDim2.new(0,5,0,35); scrollDrop.BackgroundTransparency = 1; scrollDrop.ScrollBarThickness = 3; scrollDrop.ZIndex = 51
+local sdLay = Instance.new("UIListLayout", scrollDrop); sdLay.Padding = UDim.new(0,5)
+
+for _, fName in ipairs(fishNames) do
+    local fBtn = Instance.new("TextButton", scrollDrop); fBtn.Size = UDim2.new(1,-10,0,26); fBtn.BackgroundColor3 = C.white; fBtn.BackgroundTransparency = 0.9; fBtn.Font = Enum.Font.GothamBold; fBtn.TextSize = 11; fBtn.TextXAlignment = Enum.TextXAlignment.Left; fBtn.ZIndex = 52; local pad = Instance.new("UIPadding", fBtn); pad.PaddingLeft = UDim.new(0,8); Instance.new("UICorner", fBtn).CornerRadius = UDim.new(0,6)
+    local function updateFBtn() fBtn.Text = fishSettings[fName].drop and ("✅  " .. fName) or ("⬜  " .. fName); fBtn.TextColor3 = fishColors[fName] or (fishSettings[fName].drop and C.white or C.gray) end
+    updateFBtn()
+    fBtn.MouseButton1Click:Connect(function() fishSettings[fName].drop = not fishSettings[fName].drop; updateFBtn() end)
+end
+sdLay:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() scrollDrop.CanvasSize = UDim2.new(0,0,0,sdLay.AbsoluteContentSize.Y + 10) end)
+
+-- ============================================
+-- 3. نافذة الويب هوك وتصفية الأسماك (يمين) - MZN Cyberpunk Style
+-- ============================================
+local webWin = Instance.new("Frame", screenGui); webWin.Size = UDim2.new(0,250,0,320); webWin.BackgroundColor3 = Color3.fromRGB(12,12,12); webWin.BackgroundTransparency = 0.05; webWin.BorderSizePixel = 0; webWin.Visible = false; webWin.ZIndex = 50; Instance.new("UICorner", webWin).CornerRadius = UDim.new(0,10); Instance.new("UIStroke", webWin).Color = C.white; Instance.new("UIStroke", webWin).Thickness = 1.2; Instance.new("UIStroke", webWin).Transparency = 0.6
+local wwTitle = Instance.new("TextLabel", webWin); wwTitle.Size = UDim2.new(1,0,0,30); wwTitle.BackgroundTransparency = 1; wwTitle.Text = "WEBHOOK & BAD FISH 🔔"; wwTitle.TextColor3 = C.white; wwTitle.Font = Enum.Font.GothamBold; wwTitle.TextSize = 12; wwTitle.ZIndex = 51
+local wwLine = Instance.new("Frame", webWin); wwLine.Size = UDim2.new(1,0,0,1); wwLine.Position = UDim2.new(0,0,0,30); wwLine.BackgroundColor3 = C.white; wwLine.BackgroundTransparency = 0.7; wwLine.BorderSizePixel = 0; wwLine.ZIndex = 51
+
+local webhookBox = Instance.new("TextBox", webWin)
+webhookBox.Size = UDim2.new(1,-65,0,26); webhookBox.Position = UDim2.new(0,5,0,36); webhookBox.BackgroundColor3 = Color3.fromRGB(30,30,30); webhookBox.TextColor3 = C.white; webhookBox.PlaceholderText = "Paste Webhook URL..."; webhookBox.Text = WEBHOOK_URL; webhookBox.TextSize = 10; webhookBox.Font = Enum.Font.Gotham; webhookBox.ClearTextOnFocus = false; webhookBox.ZIndex = 55
+Instance.new("UICorner", webhookBox).CornerRadius = UDim.new(0,4)
+webhookBox:GetPropertyChangedSignal("Text"):Connect(function() WEBHOOK_URL = webhookBox.Text end)
+
+local testBtn = Instance.new("TextButton", webWin)
+testBtn.Size = UDim2.new(0,50,0,26); testBtn.Position = UDim2.new(1,-55,0,36); testBtn.BackgroundColor3 = Color3.fromRGB(0,100,180); testBtn.Text = "TEST"; testBtn.TextColor3 = C.white; testBtn.Font = Enum.Font.GothamBold; testBtn.TextSize = 10; testBtn.ZIndex = 55
+Instance.new("UICorner", testBtn).CornerRadius = UDim.new(0,4)
+testBtn.MouseButton1Click:Connect(function()
+    if WEBHOOK_URL == "" or not string.find(WEBHOOK_URL, "http") then testBtn.Text = "❌"; task.delay(1.5, function() testBtn.Text = "TEST" end); return end
+    testBtn.Text = "..."
+    local success = sendDiscordNotification("TEST FISH 🐟", true)
+    if success then testBtn.Text = "✅" else testBtn.Text = "❌" end
+    task.delay(1.5, function() testBtn.Text = "TEST" end)
+end)
+
+local scrollWeb = Instance.new("ScrollingFrame", webWin); scrollWeb.Size = UDim2.new(1,-10,1,-70); scrollWeb.Position = UDim2.new(0,5,0,67); scrollWeb.BackgroundTransparency = 1; scrollWeb.ScrollBarThickness = 3; scrollWeb.ZIndex = 51
+local swbLay = Instance.new("UIListLayout", scrollWeb); swbLay.Padding = UDim.new(0,5)
+
+for _, fName in ipairs(fishNames) do
+    local rowFrame = Instance.new("Frame", scrollWeb)
+    rowFrame.Size = UDim2.new(1,-6,0,28); rowFrame.BackgroundTransparency = 0.92; rowFrame.BackgroundColor3 = C.white; rowFrame.ZIndex = 52
+    Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0,6)
+
+    local textColor = fishColors[fName] or C.white
+
+    -- زر Skip / Keep
+    local keepBtn = Instance.new("TextButton", rowFrame)
+    keepBtn.Size = UDim2.new(0.62, -2, 1, -4); keepBtn.Position = UDim2.new(0, 2, 0, 2)
+    keepBtn.BackgroundColor3 = fishSettings[fName].keep and Color3.fromRGB(0, 140, 70) or Color3.fromRGB(150, 20, 20)
+    keepBtn.Text = (fishSettings[fName].keep and "✅ KEEP: " or "❌ SKIP: ") .. fName
+    keepBtn.TextColor3 = textColor; keepBtn.Font = Enum.Font.GothamBold; keepBtn.TextSize = 10; keepBtn.ZIndex = 53
+    Instance.new("UICorner", keepBtn).CornerRadius = UDim.new(0,4)
+
+    keepBtn.MouseButton1Click:Connect(function()
+        fishSettings[fName].keep = not fishSettings[fName].keep
+        if fishSettings[fName].keep then
+            keepBtn.Text = "✅ KEEP: " .. fName
+            keepBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 70)
+        else
+            keepBtn.Text = "❌ SKIP: " .. fName
+            keepBtn.BackgroundColor3 = Color3.fromRGB(150, 20, 20)
+        end
+    end)
+
+    -- زر Webhook Notification
+    local notifyBtn = Instance.new("TextButton", rowFrame)
+    notifyBtn.Size = UDim2.new(0.36, -2, 1, -4); notifyBtn.Position = UDim2.new(0.64, 2, 0, 2)
+    notifyBtn.BackgroundColor3 = fishSettings[fName].notify and Color3.fromRGB(0, 100, 200) or Color3.fromRGB(40, 40, 40)
+    notifyBtn.Text = fishSettings[fName].notify and "🔔 Web" or "🔕 Off"
+    notifyBtn.TextColor3 = C.white; notifyBtn.Font = Enum.Font.GothamBold; notifyBtn.TextSize = 10; notifyBtn.ZIndex = 53
+    Instance.new("UICorner", notifyBtn).CornerRadius = UDim.new(0,4)
+
+    notifyBtn.MouseButton1Click:Connect(function()
+        fishSettings[fName].notify = not fishSettings[fName].notify
+        if fishSettings[fName].notify then
+            notifyBtn.Text = "🔔 Web"
+            notifyBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+        else
+            notifyBtn.Text = "🔕 Off"
+            notifyBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        end
+    end)
+end
+swbLay:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() scrollWeb.CanvasSize = UDim2.new(0,0,0,swbLay.AbsoluteContentSize.Y + 10) end)
+
+-- ============================================
+-- تحديث المواقع لجميع النوافذ
+-- ============================================
+local function updatePopups()
+    if settingsWin.Visible then settingsWin.Position = UDim2.new(main.Position.X.Scale, main.Position.X.Offset + 45, main.Position.Y.Scale, main.Position.Y.Offset - settingsWin.Size.Y.Offset - 10) end
+    if filterWin.Visible then filterWin.Position = UDim2.new(main.Position.X.Scale, main.Position.X.Offset + 45, main.Position.Y.Scale, main.Position.Y.Offset + main.Size.Y.Offset + 10) end
+    if webWin.Visible then webWin.Position = UDim2.new(main.Position.X.Scale, main.Position.X.Offset + main.Size.X.Offset + 10, main.Position.Y.Scale, main.Position.Y.Offset) end
+end
+
+dropFilterBtn.MouseButton1Click:Connect(function() filterWin.Visible = not filterWin.Visible; updatePopups() end)
+webBtn.MouseButton1Click:Connect(function() webWin.Visible = not webWin.Visible; updatePopups() end)
+settingBtn.MouseButton1Click:Connect(function() settingsWin.Visible = not settingsWin.Visible; updatePopups() end)
+saveBtn.MouseButton1Click:Connect(function() saveConfig(); saveBtn.Text = "✅"; task.delay(1.5, function() saveBtn.Text = "💾" end) end)
+
+-- ============================================
+-- 🌐 ESP نقطة الهدف
+-- ============================================
+local espRing = Instance.new("Frame", screenGui); espRing.Size = UDim2.new(0,34,0,34); espRing.BackgroundTransparency = 1; espRing.BorderSizePixel = 0; espRing.Visible = false; espRing.ZIndex = 60; Instance.new("UICorner", espRing).CornerRadius = UDim.new(1,0); Instance.new("UIStroke", espRing).Color = C.white; Instance.new("UIStroke", espRing).Thickness = 1.5
+local espDot = Instance.new("Frame", screenGui); espDot.Size = UDim2.new(0,7,0,7); espDot.BackgroundColor3 = C.white; espDot.BorderSizePixel = 0; espDot.Visible = false; espDot.ZIndex = 61; Instance.new("UICorner", espDot).CornerRadius = UDim.new(1,0)
+local crossH = Instance.new("Frame", screenGui); crossH.Size = UDim2.new(0,16,0,1.5); crossH.BackgroundColor3 = C.white; crossH.BackgroundTransparency = 0.1; crossH.BorderSizePixel = 0; crossH.Visible = false; crossH.ZIndex = 61
+local crossV = Instance.new("Frame", screenGui); crossV.Size = UDim2.new(0,1.5,0,16); crossV.BackgroundColor3 = C.white; crossV.BackgroundTransparency = 0.1; crossV.BorderSizePixel = 0; crossV.Visible = false; crossV.ZIndex = 61
+
+RunService.RenderStepped:Connect(function()
+    if not worldTarget or espHidden then espRing.Visible=false; espDot.Visible=false; crossH.Visible=false; crossV.Visible=false; return end
+    local sp, onScreen = Camera:WorldToScreenPoint(worldTarget)
+    if onScreen then
+        local x,y = sp.X, sp.Y; espRing.Position = UDim2.new(0,x-17,0,y-17); espRing.Visible=true
+        espDot.Position = UDim2.new(0,x-3,0,y-3); espDot.Visible=true; crossH.Position = UDim2.new(0,x-8,0,y); crossH.Visible=true; crossV.Position = UDim2.new(0,x,0,y-8); crossV.Visible=true
+    else espRing.Visible=false; espDot.Visible=false; crossH.Visible=false; crossV.Visible=false end
+end)
+
+local overlay = Instance.new("Frame", screenGui); overlay.Size = UDim2.new(1,0,1,0); overlay.BackgroundColor3 = C.dark; overlay.BackgroundTransparency = 0.45; overlay.BorderSizePixel = 0; overlay.Visible = false; overlay.ZIndex = 100
+local overlayTxt = Instance.new("TextLabel", overlay); overlayTxt.Size = UDim2.new(0,440,0,55); overlayTxt.Position = UDim2.new(0.5,-220,0.08,0); overlayTxt.BackgroundTransparency = 1; overlayTxt.Text = "⊕  Click to set cast point\nESC to cancel"; overlayTxt.TextSize = 18; overlayTxt.Font = Enum.Font.GothamBold; overlayTxt.TextColor3 = C.white; overlayTxt.ZIndex = 101
+local function startPick() isPickingTarget=true; overlay.Visible=true; main.Visible=false; filterWin.Visible=false; settingsWin.Visible=false; webWin.Visible=false end
+local function stopPick() isPickingTarget=false; overlay.Visible=false; main.Visible=true; updatePopups() end
+
+-- ============================================
+-- ✅ Auto Equip + الرمي
+-- ============================================
+local function castRod()
+    local character = LocalPlayer.Character
+    if not character then return false end
+    if not character:FindFirstChildOfClass("Tool") then
+        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Two, false, game); task.wait(0.15)
+        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game); task.wait(0.4)
+        character = LocalPlayer.Character
+        if not character or not character:FindFirstChildOfClass("Tool") then return false end
+    end
+    local inset = game:GetService("GuiService"):GetGuiInset()
+    local cx, cy = 960, 540
+    if worldTarget then
+        local sp, onScreen = Camera:WorldToScreenPoint(worldTarget)
+        if onScreen then cx = sp.X; cy = sp.Y + inset.Y end
+    end
+    VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, true, game, 1); task.wait(0.05); VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, false, game, 1); task.wait(0.15)
+    return true
+end
+
+-- ============================================
+-- 🎣 الحلقة الرئيسية (مع Skip Bad Fish + Webhook)
+-- ============================================
+local function startAutoFishingLoop()
+    task.spawn(function()
+        while AUTO_FISHING_ENABLED do
+            clearFishESP()
+
+            -- 🛑 إذا كانت السنارة مرمية بالماء أساساً (مكتوب Fishing...) لا ترمي مرة أخرى!
+            local castSuccess = false
+            if not findActiveBobber() then
+                for attempt = 1, MAX_CAST_RETRIES do
+                    if not AUTO_FISHING_ENABLED then break end
+                    if castRod() then castSuccess = true; break end
+                    task.wait(0.5)
+                end
+            else
+                castSuccess = true
+            end
+
+            if not AUTO_FISHING_ENABLED then break end
+            if not castSuccess then fishToggle.Text = "⌛ ما في سنارة..."; task.wait(1); fishToggle.Text = "AUTO FARM: ON"; continue end
+            task.wait(0.3)
+
+            local rod = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+            if not rod then task.wait(0.5); continue end
+
+            local snapshot = {}; for _, d in ipairs(rod:GetDescendants()) do snapshot[d] = true end
+            local fishCaught = false; local fishObject = nil; local fishName = nil
+
+            local conn = rod.DescendantAdded:Connect(function(newObj)
+                if snapshot[newObj] or fishCaught then return end
+                local n = newObj.Name; local skip = {Handle=1,Part=1,Attachment=1,Script=1,LocalScript=1,Sound=1,Weld=1,Motor6D=1,SpecialMesh=1,Decal=1,Constraint=1,BillboardGui=1,SurfaceGui=1,RopeConstraint=1,AlignPosition=1,AlignOrientation=1}
+                if skip[n] or newObj:IsA("ValueBase") or newObj:IsA("RemoteEvent") or newObj:IsA("BindableEvent") then return end
+                fishCaught = true; fishObject = newObj; fishName = n
+            end)
+
+            local elapsed = 0; local timeout = math.max(SKIP_TIMER_SECONDS + 5, 30); local lastBobberSeen = tick()
+            local detectedFishName = nil
+
+            while not fishCaught and AUTO_FISHING_ENABLED and elapsed < timeout do
+                task.wait(0.15); elapsed = elapsed + 0.15
+
+                -- فحص الاسم من الـ UI أو الشخصية
+                detectedFishName = getHookedFishName()
+                if detectedFishName then fishName = detectedFishName end
+
+                -- 🛑 فحص تصفية الأسماك الخايسة (Skip Bad Fish)
+                if detectedFishName and fishSettings[detectedFishName] and SKIP_BAD_FISH_ENABLED then
+                    if fishSettings[detectedFishName].keep == false then
+                        fishToggle.Text = "⏭️ Skip: " .. detectedFishName
+                        -- إلغاء الصيد عبر ضغط رقم 2 مرتين
+                        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Two, false, game); task.wait(0.05)
+                        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game); task.wait(0.15)
+                        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Two, false, game); task.wait(0.05)
+                        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game); task.wait(0.25)
+                        break
+                    end
+                end
+                
+                if findActiveBobber() or fishCaught then 
+                    lastBobberSeen = tick()
+                elseif tick() - lastBobberSeen > ANTI_NOFISHING_TIMEOUT then 
+                    fishToggle.Text = "🔄 Re-casting..."; break 
+                end
+            end
+            conn:Disconnect()
+            if not AUTO_FISHING_ENABLED then break end
+
+            -- 🛑 عند صيد سمكة مقبولة
+            local finalFish = fishName or detectedFishName
+            if (fishCaught or finalFish) and (not finalFish or not fishSettings[finalFish] or fishSettings[finalFish].keep ~= false) then
+                if fishObject then
+                    local target = fishObject:IsA("Model") and (fishObject.PrimaryPart or fishObject:FindFirstChildOfClass("BasePart")) or fishObject
+                    if target and target:IsA("BasePart") then makeESP(target, finalFish or "Fish") end
+                end
+
+                if finalFish and fishSettings[finalFish] and fishSettings[finalFish].notify then
+                    task.spawn(sendDiscordNotification, finalFish, false)
+                end
+
+                task.wait(SKIP_DELAY)
+                clearFishESP()
+            end
+            fishToggle.Text = "AUTO FARM: ON"
+            task.wait(WAIT_BEFORE_RECAST)
+        end
+        fishToggle.Text = "AUTO FARM: OFF"; fishToggle.BackgroundColor3 = C.white; fishToggle.BackgroundTransparency = 0.88; fishToggle.TextColor3 = C.white
+    end)
+end
+
+-- ============================================
+-- السحب والزرار والتفاعلات
+-- ============================================
+local minimized = false
+minBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    TweenService:Create(main, TweenInfo.new(0.25,Enum.EasingStyle.Quart), {Size = minimized and UDim2.new(0,290,0,50) or UDim2.new(0,290,0,305)}):Play()
+    minBtn.Text = minimized and "□" or "—"; if minimized then filterWin.Visible = false; settingsWin.Visible = false; webWin.Visible = false end
+end)
+closeBtn.MouseButton1Click:Connect(function() AUTO_FISHING_ENABLED = false; clearFishESP(); espHolder:Destroy(); screenGui:Destroy() end)
+
+fishToggle.MouseButton1Click:Connect(function()
+    AUTO_FISHING_ENABLED = not AUTO_FISHING_ENABLED
+    if AUTO_FISHING_ENABLED then fishToggle.Text = "AUTO FARM: ON"; fishToggle.BackgroundColor3 = C.white; fishToggle.BackgroundTransparency = 0.5; fishToggle.TextColor3 = C.dark; startAutoFishingLoop()
+    else fishToggle.Text = "AUTO FARM: OFF"; fishToggle.BackgroundColor3 = C.white; fishToggle.BackgroundTransparency = 0.88; fishToggle.TextColor3 = C.white end
+end)
+
+skipBtn.MouseButton1Click:Connect(function()
+    AUTO_SKIP_ENABLED = not AUTO_SKIP_ENABLED
+    if AUTO_SKIP_ENABLED then skipBtn.Text = "AUTO SKIP: ON"; skipBtn.BackgroundTransparency = 0.5; skipBtn.TextColor3 = C.dark
+    else skipBtn.Text = "AUTO SKIP: OFF"; skipBtn.BackgroundTransparency = 0.88; skipBtn.TextColor3 = C.white end
+end)
+
+badFishBtn.MouseButton1Click:Connect(function()
+    SKIP_BAD_FISH_ENABLED = not SKIP_BAD_FISH_ENABLED
+    if SKIP_BAD_FISH_ENABLED then badFishBtn.Text = "SKIP BAD FISH: ON"; badFishBtn.BackgroundTransparency = 0.5; badFishBtn.TextColor3 = C.dark
+    else badFishBtn.Text = "SKIP BAD FISH: OFF"; badFishBtn.BackgroundTransparency = 0.88; badFishBtn.TextColor3 = C.white end
+end)
+
+dropBtn.MouseButton1Click:Connect(function()
+    AUTO_DROP_ENABLED = not AUTO_DROP_ENABLED
+    if AUTO_DROP_ENABLED then dropBtn.Text = "AUTO DROP: ON"; dropBtn.BackgroundTransparency = 0.5; dropBtn.TextColor3 = C.dark
+    else dropBtn.Text = "AUTO DROP: OFF"; dropBtn.BackgroundTransparency = 0.88; dropBtn.TextColor3 = C.white end
+end)
+
+hideTargetBtn.MouseButton1Click:Connect(function()
+    espHidden = not espHidden; hideTargetBtn.Text = espHidden and "SHOW ESP" or "HIDE ESP"
+    hideTargetBtn.BackgroundColor3 = espHidden and Color3.fromRGB(80,80,80) or C.white; hideTargetBtn.TextColor3 = espHidden and C.white or C.dark
+end)
+
+pickBtn.MouseButton1Click:Connect(startPick)
+
+overlay.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        local ray = Camera:ScreenPointToRay(input.Position.X, input.Position.Y); local r = workspace:Raycast(ray.Origin, ray.Direction*1500, RaycastParams.new())
+        if r then worldTarget = r.Position; coordsLabel.Text = string.format("📍 %.0f, %.0f, %.0f", worldTarget.X, worldTarget.Y, worldTarget.Z); coordsLabel.TextColor3 = C.white end
+        stopPick()
+    end
+end)
+
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if isPickingTarget and input.KeyCode == Enum.KeyCode.Escape then stopPick(); return end
+    if not isPickingTarget and not isListeningForKey and input.KeyCode == currentKeybind then fishToggle.MouseButton1Click:Fire() end
+end)
+
+local drag, startPos2, startMouse2
+titleBar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then drag=true; startPos2=main.Position; startMouse2=i.Position end end)
+titleBar.InputChanged:Connect(function(i)
+    if drag and i.UserInputType == Enum.UserInputType.MouseMovement then
+        local d = i.Position - startMouse2; main.Position = UDim2.new(startPos2.X.Scale, startPos2.X.Offset+d.X, startPos2.Y.Scale, startPos2.Y.Offset+d.Y); updatePopups()
+    end
+end)
+UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then drag=false end end)
+
+print("⚡ M Z N ULTIMATE v16 — Integrated Skip Bad Fish & Webhook!")
