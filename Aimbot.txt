@@ -1,0 +1,643 @@
+task.spawn(function()
+    local CoreGui = game:GetService("CoreGui")
+    local Players = game:GetService("Players")
+    local TweenService = game:GetService("TweenService")
+    local UserInputService = game:GetService("UserInputService")
+    local localPlayer = Players.LocalPlayer
+
+    if CoreGui:FindFirstChild("Buhlal_UI") then
+        CoreGui.Buhlal_UI:Destroy()
+    end
+
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "Buhlal_UI"
+    screenGui.ResetOnSpawn = false
+    screenGui.IgnoreGuiInset = true
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    pcall(function()
+        screenGui.Parent = CoreGui
+    end)
+    if not screenGui.Parent then
+        screenGui.Parent = localPlayer:WaitForChild("PlayerGui")
+    end
+
+    local Colors = {
+        Background = Color3.fromRGB(15, 15, 22),
+        Panel = Color3.fromRGB(22, 22, 30),
+        Element = Color3.fromRGB(30, 30, 42),
+        ElementHover = Color3.fromRGB(38, 38, 52),
+        Accent = Color3.fromRGB(138, 92, 246),
+        Text = Color3.fromRGB(240, 240, 250),
+        TextDim = Color3.fromRGB(150, 150, 170),
+        Success = Color3.fromRGB(80, 220, 120),
+        Error = Color3.fromRGB(240, 80, 80)
+    }
+
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Name = "MainFrame"
+    mainFrame.Size = UDim2.fromOffset(480, 380)
+    mainFrame.Position = UDim2.new(0.5, -240, 0.5, -190)
+    mainFrame.BackgroundColor3 = Colors.Background
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Parent = screenGui
+
+    local mainCorner = Instance.new("UICorner")
+    mainCorner.CornerRadius = UDim.new(0, 14)
+    mainCorner.Parent = mainFrame
+
+    local mainStroke = Instance.new("UIStroke")
+    mainStroke.Color = Colors.Accent
+    mainStroke.Thickness = 1
+    mainStroke.Transparency = 0.7
+    mainStroke.Parent = mainFrame
+
+    local header = Instance.new("Frame")
+    header.Name = "Header"
+    header.Size = UDim2.new(1, 0, 0, 55)
+    header.BackgroundColor3 = Colors.Panel
+    header.BorderSizePixel = 0
+    header.Parent = mainFrame
+
+    local headerCorner = Instance.new("UICorner")
+    headerCorner.CornerRadius = UDim.new(0, 14)
+    headerCorner.Parent = header
+
+    local headerBottom = Instance.new("Frame")
+    headerBottom.Size = UDim2.new(1, 0, 0, 15)
+    headerBottom.Position = UDim2.new(0, 0, 1, -15)
+    headerBottom.BackgroundColor3 = Colors.Panel
+    headerBottom.BorderSizePixel = 0
+    headerBottom.Parent = header
+
+    local logo = Instance.new("Frame")
+    logo.Size = UDim2.fromOffset(35, 35)
+    logo.Position = UDim2.new(0, 15, 0.5, -17)
+    logo.BackgroundColor3 = Colors.Accent
+    logo.BorderSizePixel = 0
+    logo.Parent = header
+
+    local logoCorner = Instance.new("UICorner")
+    logoCorner.CornerRadius = UDim.new(1, 0)
+    logoCorner.Parent = logo
+
+    local logoIcon = Instance.new("TextLabel")
+    logoIcon.Size = UDim2.new(1, 0, 1, 0)
+    logoIcon.BackgroundTransparency = 1
+    logoIcon.Text = "B"
+    logoIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
+    logoIcon.TextSize = 20
+    logoIcon.Font = Enum.Font.GothamBold
+    logoIcon.Parent = logo
+
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(0, 200, 0, 20)
+    title.Position = UDim2.new(0, 60, 0, 10)
+    title.BackgroundTransparency = 1
+    title.Text = "buhlal"
+    title.TextColor3 = Colors.Text
+    title.TextSize = 18
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = header
+
+    local subtitle = Instance.new("TextLabel")
+    subtitle.Size = UDim2.new(0, 200, 0, 15)
+    subtitle.Position = UDim2.new(0, 60, 0, 30)
+    subtitle.BackgroundTransparency = 1
+    subtitle.Text = "v1.0 • Premium"
+    subtitle.TextColor3 = Colors.TextDim
+    subtitle.TextSize = 11
+    subtitle.Font = Enum.Font.Gotham
+    subtitle.TextXAlignment = Enum.TextXAlignment.Left
+    subtitle.Parent = header
+
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Size = UDim2.fromOffset(28, 28)
+    closeBtn.Position = UDim2.new(1, -38, 0.5, -14)
+    closeBtn.BackgroundColor3 = Colors.Element
+    closeBtn.BorderSizePixel = 0
+    closeBtn.Text = "✕"
+    closeBtn.TextColor3 = Colors.Text
+    closeBtn.TextSize = 14
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.AutoButtonColor = false
+    closeBtn.Parent = header
+
+    local closeBtnCorner = Instance.new("UICorner")
+    closeBtnCorner.CornerRadius = UDim.new(0, 8)
+    closeBtnCorner.Parent = closeBtn
+
+    closeBtn.MouseEnter:Connect(function()
+        TweenService:Create(closeBtn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Error}):Play()
+    end)
+
+    closeBtn.MouseLeave:Connect(function()
+        TweenService:Create(closeBtn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Element}):Play()
+    end)
+
+    closeBtn.MouseButton1Click:Connect(function()
+        screenGui:Destroy()
+    end)
+
+    local minBtn = Instance.new("TextButton")
+    minBtn.Size = UDim2.fromOffset(28, 28)
+    minBtn.Position = UDim2.new(1, -72, 0.5, -14)
+    minBtn.BackgroundColor3 = Colors.Element
+    minBtn.BorderSizePixel = 0
+    minBtn.Text = "−"
+    minBtn.TextColor3 = Colors.Text
+    minBtn.TextSize = 16
+    minBtn.Font = Enum.Font.GothamBold
+    minBtn.AutoButtonColor = false
+    minBtn.Parent = header
+
+    local minBtnCorner = Instance.new("UICorner")
+    minBtnCorner.CornerRadius = UDim.new(0, 8)
+    minBtnCorner.Parent = minBtn
+
+    minBtn.MouseEnter:Connect(function()
+        TweenService:Create(minBtn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.ElementHover}):Play()
+    end)
+
+    minBtn.MouseLeave:Connect(function()
+        TweenService:Create(minBtn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Element}):Play()
+    end)
+
+    local isMinimized = false
+    minBtn.MouseButton1Click:Connect(function()
+        isMinimized = not isMinimized
+        if isMinimized then
+            TweenService:Create(mainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Size = UDim2.fromOffset(480, 55)}):Play()
+            for _, v in ipairs(mainFrame:GetChildren()) do
+                if v ~= header and v:IsA("Frame") then
+                    v.Visible = false
+                end
+            end
+        else
+            TweenService:Create(mainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Size = UDim2.fromOffset(480, 380)}):Play()
+            task.wait(0.15)
+            for _, v in ipairs(mainFrame:GetChildren()) do
+                if v ~= header and v:IsA("Frame") then
+                    v.Visible = true
+                end
+            end
+        end
+    end)
+
+    local content = Instance.new("Frame")
+    content.Size = UDim2.new(1, -20, 1, -70)
+    content.Position = UDim2.new(0, 10, 0, 62)
+    content.BackgroundTransparency = 1
+    content.Parent = mainFrame
+
+    local tabsFrame = Instance.new("Frame")
+    tabsFrame.Size = UDim2.new(0, 140, 1, 0)
+    tabsFrame.BackgroundColor3 = Colors.Panel
+    tabsFrame.BorderSizePixel = 0
+    tabsFrame.Parent = content
+
+    local tabsCorner = Instance.new("UICorner")
+    tabsCorner.CornerRadius = UDim.new(0, 10)
+    tabsCorner.Parent = tabsFrame
+
+    local tabsList = Instance.new("UIListLayout")
+    tabsList.Padding = UDim.new(0, 5)
+    tabsList.SortOrder = Enum.SortOrder.LayoutOrder
+    tabsList.Parent = tabsFrame
+
+    local tabsPadding = Instance.new("UIPadding")
+    tabsPadding.PaddingTop = UDim.new(0, 8)
+    tabsPadding.PaddingLeft = UDim.new(0, 8)
+    tabsPadding.PaddingRight = UDim.new(0, 8)
+    tabsPadding.Parent = tabsFrame
+
+    local pagesFrame = Instance.new("Frame")
+    pagesFrame.Size = UDim2.new(1, -150, 1, 0)
+    pagesFrame.Position = UDim2.new(0, 150, 0, 0)
+    pagesFrame.BackgroundColor3 = Colors.Panel
+    pagesFrame.BorderSizePixel = 0
+    pagesFrame.Parent = content
+
+    local pagesCorner = Instance.new("UICorner")
+    pagesCorner.CornerRadius = UDim.new(0, 10)
+    pagesCorner.Parent = pagesFrame
+
+    local pages = {}
+    local currentTab = nil
+
+    local function createTab(name)
+        local tabBtn = Instance.new("TextButton")
+        tabBtn.Name = name .. "_Tab"
+        tabBtn.Size = UDim2.new(1, 0, 0, 32)
+        tabBtn.BackgroundColor3 = Colors.Element
+        tabBtn.BackgroundTransparency = 1
+        tabBtn.BorderSizePixel = 0
+        tabBtn.Text = "  " .. name
+        tabBtn.TextColor3 = Colors.TextDim
+        tabBtn.TextSize = 12
+        tabBtn.Font = Enum.Font.GothamSemibold
+        tabBtn.TextXAlignment = Enum.TextXAlignment.Left
+        tabBtn.AutoButtonColor = false
+        tabBtn.Parent = tabsFrame
+
+        local tabCorner = Instance.new("UICorner")
+        tabCorner.CornerRadius = UDim.new(0, 8)
+        tabCorner.Parent = tabBtn
+
+        local page = Instance.new("ScrollingFrame")
+        page.Name = name .. "_Page"
+        page.Size = UDim2.new(1, -20, 1, -20)
+        page.Position = UDim2.new(0, 10, 0, 10)
+        page.BackgroundTransparency = 1
+        page.BorderSizePixel = 0
+        page.ScrollBarThickness = 4
+        page.ScrollBarImageColor3 = Colors.Accent
+        page.CanvasSize = UDim2.new(0, 0, 0, 0)
+        page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        page.Visible = false
+        page.Parent = pagesFrame
+
+        local pageList = Instance.new("UIListLayout")
+        pageList.Padding = UDim.new(0, 8)
+        pageList.SortOrder = Enum.SortOrder.LayoutOrder
+        pageList.Parent = page
+
+        local function switchTo()
+            if currentTab == tabBtn then return end
+            if currentTab then
+                TweenService:Create(currentTab, TweenInfo.new(0.15), {
+                    BackgroundTransparency = 1,
+                    TextColor3 = Colors.TextDim
+                }):Play()
+                pages[currentTab.Name].Visible = false
+            end
+            currentTab = tabBtn
+            TweenService:Create(tabBtn, TweenInfo.new(0.15), {
+                BackgroundTransparency = 0,
+                TextColor3 = Colors.Text
+            }):Play()
+            pages[tabBtn.Name].Visible = true
+        end
+
+        tabBtn.MouseButton1Click:Connect(switchTo)
+        tabBtn.MouseEnter:Connect(function()
+            if currentTab ~= tabBtn then
+                TweenService:Create(tabBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0.7}):Play()
+            end
+        end)
+        tabBtn.MouseLeave:Connect(function()
+            if currentTab ~= tabBtn then
+                TweenService:Create(tabBtn, TweenInfo.new(0.15), {BackgroundTransparency = 1}):Play()
+            end
+        end)
+
+        pages[tabBtn.Name] = page
+
+        if not currentTab then
+            switchTo()
+        end
+
+        return page
+    end
+
+    local function createButton(parent, text, callback)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1, 0, 0, 36)
+        btn.BackgroundColor3 = Colors.Element
+        btn.BorderSizePixel = 0
+        btn.Text = text
+        btn.TextColor3 = Colors.Text
+        btn.TextSize = 12
+        btn.Font = Enum.Font.GothamSemibold
+        btn.AutoButtonColor = false
+        btn.Parent = parent
+
+        local btnCorner = Instance.new("UICorner")
+        btnCorner.CornerRadius = UDim.new(0, 8)
+        btnCorner.Parent = btn
+
+        local btnStroke = Instance.new("UIStroke")
+        btnStroke.Color = Colors.Accent
+        btnStroke.Thickness = 1
+        btnStroke.Transparency = 1
+        btnStroke.Parent = btn
+
+        btn.MouseEnter:Connect(function()
+            TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.ElementHover}):Play()
+            TweenService:Create(btnStroke, TweenInfo.new(0.15), {Transparency = 0.5}):Play()
+        end)
+
+        btn.MouseLeave:Connect(function()
+            TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Element}):Play()
+            TweenService:Create(btnStroke, TweenInfo.new(0.15), {Transparency = 1}):Play()
+        end)
+
+        btn.MouseButton1Click:Connect(function()
+            TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = Colors.Accent}):Play()
+            task.wait(0.1)
+            TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.ElementHover}):Play()
+            if callback then callback() end
+        end)
+
+        return btn
+    end
+
+    local function createInput(parent, placeholder)
+        local input = Instance.new("TextBox")
+        input.Size = UDim2.new(1, 0, 0, 34)
+        input.BackgroundColor3 = Colors.Element
+        input.BorderSizePixel = 0
+        input.Text = ""
+        input.PlaceholderText = placeholder
+        input.PlaceholderColor3 = Colors.TextDim
+        input.TextColor3 = Colors.Text
+        input.TextSize = 12
+        input.Font = Enum.Font.Gotham
+        input.ClearTextOnFocus = false
+        input.Parent = parent
+
+        local inputCorner = Instance.new("UICorner")
+        inputCorner.CornerRadius = UDim.new(0, 8)
+        inputCorner.Parent = input
+
+        local inputStroke = Instance.new("UIStroke")
+        inputStroke.Color = Colors.Accent
+        inputStroke.Thickness = 1
+        inputStroke.Transparency = 1
+        inputStroke.Parent = input
+
+        input.Focused:Connect(function()
+            TweenService:Create(inputStroke, TweenInfo.new(0.15), {Transparency = 0}):Play()
+        end)
+
+        input.FocusLost:Connect(function()
+            TweenService:Create(inputStroke, TweenInfo.new(0.15), {Transparency = 1}):Play()
+        end)
+
+        return input
+    end
+
+    local function createSection(parent, text)
+        local section = Instance.new("TextLabel")
+        section.Size = UDim2.new(1, 0, 0, 24)
+        section.BackgroundTransparency = 1
+        section.Text = text
+        section.TextColor3 = Colors.TextDim
+        section.TextSize = 11
+        section.Font = Enum.Font.GothamBold
+        section.TextXAlignment = Enum.TextXAlignment.Left
+        section.Parent = parent
+        return section
+    end
+
+    local playerPage = createTab("Player")
+
+    createSection(playerPage, "اسمك")
+    local myNameInput = createInput(playerPage, "اسمك الوهمي...")
+
+    createSection(playerPage, "لفلك")
+    local myLevelInput = createInput(playerPage, "لفلك الوهمي...")
+
+    createButton(playerPage, "تطبيق على نفسك", function()
+        local fakeName = myNameInput.Text
+        local levelText = myLevelInput.Text
+        local character = localPlayer.Character
+        
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if fakeName ~= "" and humanoid then
+                humanoid.DisplayName = fakeName
+                for _, d in ipairs(character:GetDescendants()) do
+                    if d:IsA("TextLabel") and tonumber(d.Text) == nil then
+                        d.Text = fakeName
+                    end
+                end
+            end
+            
+            if levelText ~= "" then
+                local lvlNum = tonumber(levelText)
+                if lvlNum then
+                    if lvlNum > 500 then lvlNum = 500 end
+                    for _, d in ipairs(character:GetDescendants()) do
+                        if d:IsA("TextLabel") then
+                            local val = tonumber(d.Text)
+                            if val ~= nil then
+                                d.Text = tostring(lvlNum)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    local othersPage = createTab("Others")
+
+    createSection(othersPage, "اختر لاعب")
+
+    local selectedTargetPlayer = nil
+
+    local dropdownBtn = Instance.new("TextButton")
+    dropdownBtn.Size = UDim2.new(1, 0, 0, 34)
+    dropdownBtn.BackgroundColor3 = Colors.Element
+    dropdownBtn.BorderSizePixel = 0
+    dropdownBtn.Text = "اختر لاعب ∨"
+    dropdownBtn.TextColor3 = Colors.Text
+    dropdownBtn.TextSize = 12
+    dropdownBtn.Font = Enum.Font.GothamSemibold
+    dropdownBtn.AutoButtonColor = false
+    dropdownBtn.Parent = othersPage
+
+    local dropCorner = Instance.new("UICorner")
+    dropCorner.CornerRadius = UDim.new(0, 8)
+    dropCorner.Parent = dropdownBtn
+
+    local playersList = Instance.new("ScrollingFrame")
+    playersList.Size = UDim2.new(1, 0, 0, 0)
+    playersList.BackgroundColor3 = Colors.Element
+    playersList.BorderSizePixel = 0
+    playersList.ScrollBarThickness = 4
+    playersList.ScrollBarImageColor3 = Colors.Accent
+    playersList.CanvasSize = UDim2.new(0, 0, 0, 0)
+    playersList.Visible = false
+    playersList.Parent = othersPage
+
+    local playersListCorner = Instance.new("UICorner")
+    playersListCorner.CornerRadius = UDim.new(0, 8)
+    playersListCorner.Parent = playersList
+
+    local playersListLayout = Instance.new("UIListLayout")
+    playersListLayout.Padding = UDim.new(0, 4)
+    playersListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    playersListLayout.Parent = playersList
+
+    local playersListPadding = Instance.new("UIPadding")
+    playersListPadding.PaddingTop = UDim.new(0, 6)
+    playersListPadding.PaddingBottom = UDim.new(0, 6)
+    playersListPadding.PaddingLeft = UDim.new(0, 6)
+    playersListPadding.PaddingRight = UDim.new(0, 6)
+    playersListPadding.Parent = playersList
+
+    local function refreshPlayersList()
+        for _, child in ipairs(playersList:GetChildren()) do
+            if child:IsA("TextButton") then
+                child:Destroy()
+            end
+        end
+        
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= localPlayer then
+                local pBtn = Instance.new("TextButton")
+                pBtn.Size = UDim2.new(1, -12, 0, 28)
+                pBtn.BackgroundColor3 = Colors.ElementHover
+                pBtn.BorderSizePixel = 0
+                pBtn.Text = "  " .. p.Name
+                pBtn.TextColor3 = Colors.Text
+                pBtn.TextSize = 11
+                pBtn.Font = Enum.Font.Gotham
+                pBtn.TextXAlignment = Enum.TextXAlignment.Left
+                pBtn.AutoButtonColor = false
+                pBtn.Parent = playersList
+                
+                local c = Instance.new("UICorner")
+                c.CornerRadius = UDim.new(0, 6)
+                c.Parent = pBtn
+                
+                pBtn.MouseEnter:Connect(function()
+                    TweenService:Create(pBtn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Accent}):Play()
+                end)
+                
+                pBtn.MouseLeave:Connect(function()
+                    TweenService:Create(pBtn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.ElementHover}):Play()
+                end)
+                
+                pBtn.MouseButton1Click:Connect(function()
+                    selectedTargetPlayer = p
+                    dropdownBtn.Text = "اللاعب: " .. p.Name .. " ✓"
+                    dropdownBtn.TextColor3 = Colors.Success
+                    playersList.Visible = false
+                    TweenService:Create(playersList, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 0)}):Play()
+                end)
+            end
+        end
+        
+        playersList.CanvasSize = UDim2.new(0, 0, 0, playersListLayout.AbsoluteContentSize.Y + 12)
+    end
+
+    dropdownBtn.MouseButton1Click:Connect(function()
+        if playersList.Visible then
+            TweenService:Create(playersList, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 0)}):Play()
+            task.wait(0.2)
+            playersList.Visible = false
+        else
+            refreshPlayersList()
+            playersList.Visible = true
+            local h = math.min(150, playersListLayout.AbsoluteContentSize.Y + 12)
+            TweenService:Create(playersList, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, h)}):Play()
+        end
+    end)
+
+    createSection(othersPage, "اسم اللاعب")
+    local otherNameInput = createInput(othersPage, "الاسم الوهمي للاعب...")
+
+    createSection(othersPage, "لفله")
+    local otherLevelInput = createInput(othersPage, "لفل اللاعب الوهمي...")
+
+    createButton(othersPage, "تطبيق على اللاعب", function()
+        local fakeName = otherNameInput.Text
+        local levelText = otherLevelInput.Text
+        
+        if selectedTargetPlayer and selectedTargetPlayer.Character then
+            local char = selectedTargetPlayer.Character
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            
+            if fakeName ~= "" and hum then
+                hum.DisplayName = fakeName
+                for _, d in ipairs(char:GetDescendants()) do
+                    if d:IsA("TextLabel") and tonumber(d.Text) == nil then
+                        d.Text = fakeName
+                    end
+                end
+            end
+            
+            if levelText ~= "" then
+                local lvlNum = tonumber(levelText)
+                if lvlNum then
+                    if lvlNum > 500 then lvlNum = 500 end
+                    for _, d in ipairs(char:GetDescendants()) do
+                        if d:IsA("TextLabel") then
+                            local val = tonumber(d.Text)
+                            if val ~= nil then
+                                d.Text = tostring(lvlNum)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    local settingsPage = createTab("Settings")
+
+    createSection(settingsPage, "الديسكورد")
+    createButton(settingsPage, "نسخ رابط الديسكورد", function()
+        if setclipboard then
+            setclipboard("https://discord.gg/top7")
+        end
+    end)
+
+    createSection(settingsPage, "معلومات")
+    local infoLabel = Instance.new("TextLabel")
+    infoLabel.Size = UDim2.new(1, 0, 0, 60)
+    infoLabel.BackgroundColor3 = Colors.Element
+    infoLabel.BorderSizePixel = 0
+    infoLabel.Text = "buhlal v1.0\nWindUI Style\n\nMade with love"
+    infoLabel.TextColor3 = Colors.TextDim
+    infoLabel.TextSize = 11
+    infoLabel.Font = Enum.Font.Gotham
+    infoLabel.Parent = settingsPage
+
+    local infoCorner = Instance.new("UICorner")
+    infoCorner.CornerRadius = UDim.new(0, 8)
+    infoCorner.Parent = infoLabel
+
+    local dragging = false
+    local dragStart, startPos
+
+    header.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = mainFrame.Position
+        end
+    end)
+
+    header.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            mainFrame.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    mainFrame.BackgroundTransparency = 1
+    header.BackgroundTransparency = 1
+    headerBottom.BackgroundTransparency = 1
+    tabsFrame.BackgroundTransparency = 1
+    pagesFrame.BackgroundTransparency = 1
+
+    TweenService:Create(mainFrame, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
+    TweenService:Create(header, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
+    TweenService:Create(headerBottom, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
+    TweenService:Create(tabsFrame, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
+    TweenService:Create(pagesFrame, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
+end)
