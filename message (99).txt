@@ -1,0 +1,4938 @@
+-- Recovered Luau source by ZeroVector (Modified: Manual Car Mount + Underground MZN Tween)
+    if getgenv().RXZBlockSpin_Loaded then
+        return
+    end
+    getgenv().RXZBlockSpin_Loaded = true
+
+    local v7 = game:GetService("Players")
+    local v14 = game:GetService("TweenService")
+    local v15 = game:GetService("RunService")
+    local v16 = game:GetService("Workspace")
+    local v17 = game:GetService("ReplicatedStorage")
+    local v18 = game:GetService("UserInputService")
+    game:GetService("VirtualUser")
+    local v19 = game:GetService("VirtualInputManager")
+    local v20 = game:GetService("HttpService")
+    game:GetService("TeleportService")
+    local v21 = game:GetService("ContentProvider")
+    local v22 = v7.LocalPlayer
+    local v23 = v22:WaitForChild("PlayerGui")
+    local v24 = v16.CurrentCamera
+    local v25 = false
+    local v27 = Instance.new("ScreenGui")
+    v27.Name = "RXZBlockSpin"
+    v27.ResetOnSpawn = false
+    v27.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    v27.IgnoreGuiInset = true
+    v27.Parent = v23
+
+    local v35 = function(a1, a2)
+        local v28 = Instance.new(a1)
+        for v33, v34 in pairs(a2) do
+            if v33 ~= "Parent" then
+                v28[v33] = v34
+            end
+        end
+        if a2.Parent then
+            v28.Parent = a2.Parent
+        end
+        return v28
+    end
+
+    local v37 = function(a3, a4, a5)
+        local v36 = v14:Create(a3, a4, a5)
+        v36:Play()
+        return v36
+    end
+
+    local v52 = function(a11)
+        local v49 = math.floor(a11 / 3600)
+        local v50 = math.floor(a11 % 3600 / 60)
+        local v51 = math.floor(a11 % 60)
+        if v49 > 0 then
+            return string.format("%02d:%02d:%02d", v49, v50, v51)
+        end
+        return string.format("%02d:%02d", v50, v51)
+    end
+
+    local v63 = function(a12, a13)
+        local v53 = a13 == "success" and Color3.fromRGB(0, 255, 120) or Color3.fromRGB(255, 70, 80)
+        local v55 = v35("TextLabel", {
+            Size = UDim2.new(0, 320, 0, 50),
+            Position = UDim2.new(0.5, -160, 0.18, 0),
+            BackgroundTransparency = 1,
+            Text = a12,
+            TextColor3 = v53,
+            TextSize = 18,
+            Font = Enum.Font.GothamBold,
+            TextStrokeTransparency = 0.3,
+            ZIndex = 50,
+            Parent = v27,
+        })
+        v37(v55, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -160, 0.15, 0)})
+        task.delay(1.4, function()
+            if v55 and v55.Parent then
+                v55:Destroy()
+            end
+        end)
+    end
+
+    local v64 = {
+        Background = Color3.fromRGB(12, 12, 14),
+        Panel = Color3.fromRGB(20, 20, 24),
+        PanelLight = Color3.fromRGB(30, 30, 36),
+        PanelHover = Color3.fromRGB(48, 48, 56),
+        Accent = Color3.fromRGB(255, 255, 255),
+        AccentDim = Color3.fromRGB(180, 180, 180),
+        Text = Color3.fromRGB(255, 255, 255),
+        SubText = Color3.fromRGB(175, 175, 185),
+        Stroke = Color3.fromRGB(80, 80, 95),
+        Green = Color3.fromRGB(255, 255, 255),
+        GreenDim = Color3.fromRGB(50, 50, 60),
+        Red = Color3.fromRGB(200, 200, 200),
+        Overlay = Color3.fromRGB(0, 0, 0),
+        Blue = Color3.fromRGB(220, 220, 220),
+        Gold = Color3.fromRGB(255, 255, 255),
+    }
+    local v65 = Enum.Font.GothamBold
+    local v66 = Enum.Font.GothamMedium
+    local v67 = Enum.Font.Gotham
+
+    local v69 = function(a14, a15)
+        local v68 = a15 or 0.5
+        a14.TextStrokeTransparency = v68
+        a14.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    end
+
+    local v75 = function(a16)
+        local v70 = v24.ViewportSize
+        if not a16 then
+            local v73 = math.clamp(v70.X * 0.44, 620, 760)
+            local v74 = math.clamp(v70.Y * 0.66, 440, 560)
+            return UDim2.fromOffset(v73, v74)
+        end
+        local v71 = math.clamp(v70.X * 0.96, 300, 390)
+        local v72 = math.clamp(v70.Y * 0.6, 370, 500)
+        return UDim2.fromOffset(v71, v72)
+    end
+
+    local v79 = v35("Frame", {
+        Name = "IntroFrame",
+        Size = UDim2.fromScale(1, 1),
+        BackgroundColor3 = v64.Background,
+        BorderSizePixel = 0,
+        ZIndex = 20,
+        Parent = v27,
+    })
+    local v80 = v35("ImageLabel", {
+        Name = "IntroBgImage",
+        Size = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 0,
+        BackgroundColor3 = v64.Background,
+        Image = "rbxassetid://100186879710136",
+        ScaleType = Enum.ScaleType.Crop,
+        ZIndex = 20,
+        Parent = v79,
+    })
+    local v81 = v35("Frame", {
+        Size = UDim2.fromScale(1, 1),
+        BackgroundColor3 = v64.Overlay,
+        BackgroundTransparency = 0.4,
+        BorderSizePixel = 0,
+        ZIndex = 21,
+        Parent = v79,
+    })
+    local v82 = v35("TextLabel", {
+        Name = "IntroTitle",
+        Size = UDim2.fromScale(0.8, 0.1),
+        Position = UDim2.fromScale(0.5, 0.35),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundTransparency = 1,
+        Font = Enum.Font.GothamBlack,
+        Text = "RXZ BLOCK SPIN",
+        TextColor3 = v64.Text,
+        TextSize = 48,
+        ZIndex = 22,
+        Parent = v79,
+    })
+    v69(v82, 0.2)
+    local v83 = v35("TextLabel", {
+        Name = "IntroSubtitle",
+        Size = UDim2.fromScale(0.8, 0.05),
+        Position = UDim2.fromScale(0.5, 0.45),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundTransparency = 1,
+        Font = v66,
+        Text = "Initializing System...",
+        TextColor3 = v64.Accent,
+        TextSize = 16,
+        ZIndex = 22,
+        Parent = v79,
+    })
+    v69(v83, 0.3)
+    local v84 = v35("Frame", {
+        Name = "BarBack",
+        Size = UDim2.new(0.5, 0, 0, 5),
+        Position = UDim2.fromScale(0.5, 0.55),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = v64.PanelLight,
+        BorderSizePixel = 0,
+        ZIndex = 22,
+        Parent = v79,
+    })
+    v35("UICorner", {CornerRadius = UDim.new(1, 0), Parent = v84})
+    local v85 = v35("Frame", {
+        Name = "BarFill",
+        Size = UDim2.new(0, 0, 1, 0),
+        BackgroundColor3 = v64.Accent,
+        BorderSizePixel = 0,
+        ZIndex = 23,
+        Parent = v84,
+    })
+    v35("UICorner", {CornerRadius = UDim.new(1, 0), Parent = v85})
+    local v86 = true
+    task.spawn(function()
+        local v87 = {
+            "Initializing System...",
+            "Fetching Player Data...",
+            "Establishing Connection...",
+            "Loading Assets...",
+        }
+        local v88 = 1
+        while v86 and v83.Parent do
+            if #v87 < v88 then
+                v88 = 1
+            end
+            v83.Text = v87[v88]
+            v88 = v88 + 1
+            task.wait(0.7)
+        end
+    end)
+    v37(v85, TweenInfo.new(3.5, Enum.EasingStyle.Quad), {Size = UDim2.new(1, 0, 1, 0)})
+    task.wait(3.5)
+    v86 = false
+    v83.Text = "Welcome back, " .. v22.Name .. "!"
+    local v89 = {TextColor3 = v64.Green}
+    v37(v83, TweenInfo.new(0.3), v89)
+    task.wait(1.5)
+    v37(v81, TweenInfo.new(0.6), {BackgroundTransparency = 1})
+    v37(v80, TweenInfo.new(0.6), {ImageTransparency = 1})
+    v37(v79, TweenInfo.new(0.6), {BackgroundTransparency = 1})
+    v37(v82, TweenInfo.new(0.5), {TextTransparency = 1})
+    v37(v83, TweenInfo.new(0.5), {TextTransparency = 1})
+    v37(v84, TweenInfo.new(0.5), {BackgroundTransparency = 1})
+    v37(v85, TweenInfo.new(0.5), {BackgroundTransparency = 1})
+    task.wait(0.65)
+    v79:Destroy()
+
+    local v90 = v35("Frame", {
+        Name = "DeviceOverlay",
+        Size = UDim2.fromScale(1, 1),
+        BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ZIndex = 20,
+        Parent = v27,
+    })
+    v37(v90, TweenInfo.new(0.35), {BackgroundTransparency = 0.45})
+    local v91 = v35("Frame", {
+        Name = "DeviceCard",
+        Size = UDim2.fromOffset(300, 0),
+        Position = UDim2.fromScale(0.5, 0.5),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = v64.Panel,
+        BorderSizePixel = 0,
+        ClipsDescendants = true,
+        ZIndex = 21,
+        Parent = v90,
+    })
+    v35("UICorner", {CornerRadius = UDim.new(0, 14), Parent = v91})
+    v35("UIStroke", {
+        Color = v64.Accent,
+        Thickness = 1,
+        Transparency = 0.4,
+        Parent = v91,
+    })
+    v35("ImageLabel", {
+        Size = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 0,
+        BackgroundColor3 = v64.Panel,
+        Image = "rbxassetid://95647138374178",
+        ScaleType = Enum.ScaleType.Crop,
+        ZIndex = 21,
+        Parent = v91,
+    })
+    v35("Frame", {
+        Size = UDim2.fromScale(1, 1),
+        BackgroundColor3 = v64.Overlay,
+        BackgroundTransparency = 0.35,
+        BorderSizePixel = 0,
+        ZIndex = 21,
+        Parent = v91,
+    })
+    v37(v91, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(300, 190)})
+    v69(v35("TextLabel", {
+        Size = UDim2.new(1, -30, 0, 22),
+        Position = UDim2.fromOffset(15, 22),
+        BackgroundTransparency = 1,
+        Font = v65,
+        Text = "Choose your device",
+        TextColor3 = v64.Text,
+        TextSize = 18,
+        ZIndex = 22,
+        Parent = v91,
+    }), 0.3)
+    v69(v35("TextLabel", {
+        Size = UDim2.new(1, -30, 0, 16),
+        Position = UDim2.fromOffset(15, 48),
+        BackgroundTransparency = 1,
+        Font = v67,
+        Text = "This sets the layout size",
+        TextColor3 = v64.SubText,
+        TextSize = 12,
+        ZIndex = 22,
+        Parent = v91,
+    }), 0.4)
+    local v92 = v35("Frame", {
+        Size = UDim2.new(1, -30, 0, 90),
+        Position = UDim2.fromOffset(15, 80),
+        BackgroundTransparency = 1,
+        ZIndex = 22,
+        Parent = v91,
+    })
+    v35("UIListLayout", {
+        FillDirection = Enum.FillDirection.Horizontal,
+        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+        VerticalAlignment = Enum.VerticalAlignment.Center,
+        Padding = UDim.new(0, 14),
+        Parent = v92,
+    })
+    local v103 = function(a17)
+        local v94 = v35("TextButton", {
+            Size = UDim2.new(0.47, 0, 1, 0),
+            BackgroundColor3 = v64.PanelLight,
+            BackgroundTransparency = 0.1,
+            AutoButtonColor = false,
+            Font = v66,
+            Text = a17,
+            TextColor3 = v64.Text,
+            TextSize = 16,
+            ZIndex = 22,
+            Parent = v92,
+        })
+        v69(v94, 0.4)
+        v35("UICorner", {CornerRadius = UDim.new(0, 10), Parent = v94})
+        v35("UIStroke", {
+            Color = v64.Accent,
+            Thickness = 1,
+            Transparency = 0.3,
+            Parent = v94,
+        })
+        v94.MouseEnter:Connect(function()
+            local v98 = {
+                BackgroundColor3 = v64.AccentDim,
+                BackgroundTransparency = 0,
+            }
+            v37(v94, TweenInfo.new(0.15), v98)
+        end)
+        v94.MouseLeave:Connect(function()
+            local v102 = {
+                BackgroundColor3 = v64.PanelLight,
+                BackgroundTransparency = 0.1,
+            }
+            v37(v94, TweenInfo.new(0.15), v102)
+        end)
+        return v94
+    end
+    local v104 = v103("PC")
+    local v105 = v103("Mobile")
+    local v106 = v35("Frame", {
+        Name = "MainFrame",
+        Size = UDim2.fromOffset(0, 0),
+        Position = UDim2.fromScale(0.5, 0.5),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = v64.Background,
+        BorderSizePixel = 0,
+        Visible = false,
+        ClipsDescendants = true,
+        ZIndex = 2,
+        Parent = v27,
+    })
+    v35("UICorner", {CornerRadius = UDim.new(0, 16), Parent = v106})
+    v35("UIStroke", {
+        Color = v64.Accent,
+        Thickness = 1,
+        Transparency = 0.5,
+        Parent = v106,
+    })
+    local v107 = Instance.new("UIScale")
+    v107.Name = "MainUIScale"
+    v107.Scale = 1
+    v107.Parent = v106
+    v35("ImageLabel", {
+        Size = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 0,
+        BackgroundColor3 = v64.Background,
+        Image = "rbxassetid://72916852257641",
+        ScaleType = Enum.ScaleType.Crop,
+        ZIndex = 1,
+        Parent = v106,
+    })
+    v35("Frame", {
+        Size = UDim2.fromScale(1, 1),
+        BackgroundColor3 = v64.Overlay,
+        BackgroundTransparency = 0.45,
+        BorderSizePixel = 0,
+        ZIndex = 1,
+        Parent = v106,
+    })
+    local v109 = v35("Frame", {
+        Name = "TopBar",
+        Size = UDim2.new(1, 0, 0, 42),
+        BackgroundColor3 = v64.Panel,
+        BorderSizePixel = 0,
+        ZIndex = 3,
+        Parent = v106,
+    })
+    v35("UICorner", {CornerRadius = UDim.new(0, 16), Parent = v109})
+    v35("Frame", {
+        Size = UDim2.new(1, 0, 0, 16),
+        Position = UDim2.new(0, 0, 1, -16),
+        BackgroundColor3 = v64.Panel,
+        BorderSizePixel = 0,
+        ZIndex = 3,
+        Parent = v109,
+    })
+    local v110 = v35("TextLabel", {
+        Name = "TopBarText",
+        Size = UDim2.new(1, -110, 1, 0),
+        Position = UDim2.fromOffset(16, 0),
+        BackgroundTransparency = 1,
+        Font = Enum.Font.Code,
+        Text = "",
+        TextColor3 = v64.Accent,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextSize = 16,
+        ZIndex = 4,
+        Parent = v109,
+    })
+    local v111 = v35("Frame", {
+        Size = UDim2.fromOffset(70, 26),
+        Position = UDim2.new(1, -82, 0.5, 0),
+        AnchorPoint = Vector2.new(0, 0.5),
+        BackgroundTransparency = 1,
+        ZIndex = 5,
+        Parent = v109,
+    })
+    v35("UIListLayout", {
+        FillDirection = Enum.FillDirection.Horizontal,
+        HorizontalAlignment = Enum.HorizontalAlignment.Right,
+        VerticalAlignment = Enum.VerticalAlignment.Center,
+        Padding = UDim.new(0, 8),
+        Parent = v111,
+    })
+    local v122 = function(a18, a19)
+        local v113 = v35("TextButton", {
+            Size = UDim2.fromOffset(26, 26),
+            BackgroundColor3 = v64.PanelLight,
+            AutoButtonColor = false,
+            Font = v66,
+            Text = a18,
+            TextColor3 = v64.SubText,
+            TextSize = 16,
+            ZIndex = 5,
+            Parent = v111,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(1, 0), Parent = v113})
+        v35("UIStroke", {Color = v64.Stroke, Thickness = 1, Parent = v113})
+        v113.MouseEnter:Connect(function()
+            v37(v113, TweenInfo.new(0.15), {BackgroundColor3 = a19})
+            local v117 = {TextColor3 = v64.Text}
+            v37(v113, TweenInfo.new(0.15), v117)
+        end)
+        v113.MouseLeave:Connect(function()
+            local v120 = {BackgroundColor3 = v64.PanelLight}
+            v37(v113, TweenInfo.new(0.15), v120)
+            local v121 = {TextColor3 = v64.SubText}
+            v37(v113, TweenInfo.new(0.15), v121)
+        end)
+        return v113
+    end
+    local v123 = v122("—", v64.AccentDim)
+    local v124 = v122("×", v64.Red);
+
+    (function(a6, a7, a8, a9, a10)
+        task.spawn(function()
+            while a6.Parent do
+                for v46 = 1, #a7 do
+                    if not a6.Parent then
+                        return
+                    end
+                    a6.Text = string.sub(a7, 1, v46)
+                    task.wait(a8)
+                end
+                task.wait(a9)
+                for v48 = #a7, 0, -1 do
+                    if not a6.Parent then
+                        return
+                    end
+                    a6.Text = string.sub(a7, 1, v48)
+                    task.wait(a10)
+                end
+                task.wait(0.4)
+            end
+        end)
+    end)(v110, "RXZ BLOCK SPIN", 0.06, 1.2, 0.03)
+
+    local v125 = false
+    local v135 = false
+    local v136 = nil
+    local v137 = nil
+    local v138 = nil
+    local v141 = function(a20)
+        local v139 = a20.Position - v137
+        local v140 = UDim2.new(v138.X.Scale, v138.X.Offset + v139.X, v138.Y.Scale, v138.Y.Offset + v139.Y)
+        v106.Position = v140
+    end
+    local v155 = function()
+        local v142 = v18:GetMouseLocation()
+        local v143 = v23:GetGuiObjectsAtPosition(v142.X, v142.Y)
+        for v148, v149 in ipairs(v143) do
+            if not v149:IsDescendantOf(v106) then
+                continue
+            end
+            local v150 = v149.Name
+            local v151 = v150 or ""
+            if v151 == "SliderTrack" or v151 == "SliderKnob" or v151 == "SliderFill" then
+                return true
+            end
+            local v152 = v149.Parent
+            local v154
+            if v152 then
+                local v153 = v152.Name == "SliderTrack" or v152.Name == "SliderKnob" or v152.Name == "SliderFill"
+                v154 = v153
+            else
+                v154 = v152
+            end
+            if v154 then
+                return true
+            end
+        end
+        return false
+    end
+    v106.InputBegan:Connect(function(a21)
+        if a21.UserInputType == Enum.UserInputType.MouseButton1 or a21.UserInputType == Enum.UserInputType.Touch then
+            if v125 or v155() then
+                return
+            end
+            v135 = true
+            v137 = a21.Position
+            v138 = v106.Position
+        end
+    end)
+    v18.InputChanged:Connect(function(a22)
+        if not v135 then
+            return
+        end
+        if a22.UserInputType == Enum.UserInputType.MouseMovement or a22.UserInputType == Enum.UserInputType.Touch then
+            v136 = a22
+        end
+    end)
+    v18.InputEnded:Connect(function(a23)
+        if a23.UserInputType == Enum.UserInputType.MouseButton1 or a23.UserInputType == Enum.UserInputType.Touch then
+            v135 = false
+            v125 = false
+        end
+    end)
+    v15.RenderStepped:Connect(function()
+        if v135 and v136 then
+            if v125 or v155() then
+                v135 = false
+                return
+            end
+            v141(v136)
+        end
+    end)
+
+    local v156 = v35("Frame", {
+        Name = "Sidebar",
+        Size = UDim2.new(0, 150, 1, -42),
+        Position = UDim2.new(1, -150, 0, 42),
+        BackgroundColor3 = v64.Panel,
+        BackgroundTransparency = 0.05,
+        BorderSizePixel = 0,
+        ZIndex = 2,
+        Parent = v106,
+    })
+    local v157 = v35("Frame", {
+        Size = UDim2.new(1, 0, 0, 58),
+        BackgroundTransparency = 1,
+        ZIndex = 3,
+        Parent = v156,
+    })
+    local v158 = v35("Frame", {
+        Name = "UptimeBadge",
+        Size = UDim2.fromOffset(90, 20),
+        Position = UDim2.fromOffset(14, 18),
+        BackgroundColor3 = v64.GreenDim,
+        BackgroundTransparency = 0.25,
+        ZIndex = 3,
+        Parent = v157,
+    })
+    v35("UICorner", {CornerRadius = UDim.new(1, 0), Parent = v158})
+    v35("UIStroke", {
+        Color = v64.Green,
+        Thickness = 1,
+        Transparency = 0.1,
+        Parent = v158,
+    })
+    local v159 = v35("Frame", {
+        Size = UDim2.fromOffset(6, 6),
+        Position = UDim2.fromOffset(8, 7),
+        BackgroundColor3 = v64.Green,
+        BorderSizePixel = 0,
+        ZIndex = 4,
+        Parent = v158,
+    })
+    v35("UICorner", {CornerRadius = UDim.new(1, 0), Parent = v159})
+    local v160 = v35("TextLabel", {
+        Size = UDim2.new(1, -20, 1, 0),
+        Position = UDim2.fromOffset(18, 0),
+        BackgroundTransparency = 1,
+        Font = v66,
+        Text = "00:00",
+        TextColor3 = v64.Green,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextSize = 12,
+        ZIndex = 4,
+        Parent = v158,
+    })
+    task.spawn(function()
+        while v159.Parent do
+            v37(v159, TweenInfo.new(0.8, Enum.EasingStyle.Sine), {BackgroundTransparency = 0.6})
+            task.wait(0.8)
+            v37(v159, TweenInfo.new(0.8, Enum.EasingStyle.Sine), {BackgroundTransparency = 0})
+            task.wait(0.8)
+        end
+    end)
+    local v163 = os.clock()
+    task.spawn(function()
+        while v160.Parent do
+            local v165 = v52(os.clock() - v163)
+            v160.Text = v165
+            task.wait(1)
+        end
+    end)
+    v35("Frame", {
+        Size = UDim2.new(1, -20, 0, 1),
+        Position = UDim2.fromOffset(10, 58),
+        BackgroundColor3 = v64.Stroke,
+        BorderSizePixel = 0,
+        ZIndex = 3,
+        Parent = v156,
+    })
+    local v166 = v35("ScrollingFrame", {
+        Size = UDim2.new(1, -20, 1, -76),
+        Position = UDim2.fromOffset(10, 66),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ScrollBarThickness = 3,
+        ScrollBarImageColor3 = v64.AccentDim,
+        CanvasSize = UDim2.fromOffset(0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ZIndex = 3,
+        Parent = v156,
+    })
+    v35("UIListLayout", {
+        Padding = UDim.new(0, 6),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = v166,
+    })
+    local v167 = v35("Frame", {
+        Name = "ContentArea",
+        Size = UDim2.new(1, -150, 1, -42),
+        Position = UDim2.new(0, 0, 0, 42),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ZIndex = 2,
+        Parent = v106,
+    })
+
+    if getgenv then
+        getgenv().identifyexecutor = nil
+    end
+    if getfenv then
+        getfenv().identifyexecutor = nil
+    end
+
+    local v168 = {}
+    local v177 = v17:WaitForChild("Remotes", 10)
+    local v178 = {}
+    local v179 = {event = 0, func = 0}
+    local v180 = {}
+    local v181 = false
+    local v182 = {}
+
+    if v177 then
+        v178.send = v177:FindFirstChild("Send")
+        v178.get = v177:FindFirstChild("Get")
+    end
+
+    v168.on_connect = function(a24)
+        if v181 then
+            a24()
+        else
+            v182[#v182 + 1] = a24
+        end
+    end
+    v168.hook = function(a25, a26)
+        if not a26 then
+            error("Function nil for hook " .. a25)
+        end
+        if v181 then
+            v180[a25] = a26
+        else
+            v168.on_connect(function()
+                v168.hook(a25, a26)
+            end)
+        end
+    end
+    v168.is_connected = function(a27)
+        local v188 = a27:GetAttribute("IsConnected")
+        local v189 = v188 and true or false
+        return v189
+    end
+
+    task.wait(0.1)
+    if v178.send then
+        local v190 = v178.send
+        local v191 = v178.send.FireServer
+        v168.send = function(a28, ...)
+            v179.event = v179.event + 1
+            local v192 = v179.event
+            local v193 = table.pack(...)
+            v193.n = 4 + v193.n - 1
+            table.move(v193, 1, v193.n, 4, v193)
+            v193[1] = v190
+            v193[2] = v192
+            v193[3] = a28
+            v191(table.unpack(v193, 1, v193.n))
+        end
+    end
+    if v178.get then
+        local v194 = v178.get
+        local v195 = v178.get.InvokeServer
+        v168.get = function(a29, ...)
+            v179.func = v179.func + 1
+            local v196 = v179.func
+            local v197 = table.pack(...)
+            v197.n = 4 + v197.n - 1
+            table.move(v197, 1, v197.n, 4, v197)
+            v197[1] = v194
+            v197[2] = v196
+            v197[3] = a29
+            return v195(table.unpack(v197, 1, v197.n))
+        end
+    end
+
+    task.wait(0.1)
+    local v206 = function()
+        if v178.send then
+            v178.send.OnClientEvent:Connect(function(a30, ...)
+                if v180[a30] then
+                    v180[a30](...)
+                end
+            end)
+        end
+        if v178.get then
+            v178.get.OnClientInvoke = function(a31, ...)
+                if not v180[a31] then
+                    return
+                end
+                return v180[a31](...)
+            end
+        end
+        pcall(function()
+            for v205 = 1, #v182 do
+                v182[v205]()
+            end
+        end)
+    end
+    v168.loaded = function()
+        v181 = true
+        v206()
+    end
+
+    pcall(function()
+        require(v17.Modules.Game.UI.TransitionUI).transition = function() end
+    end)
+    pcall(function()
+        local v219 = require(v17.Modules.Game.CharacterCreator.CharacterCreator)
+        if v219.start then
+            v219.start = function()
+                while true do
+                    task.wait(1)
+                end
+            end
+        end
+    end)
+
+    local v223 = nil
+    local v224 = nil
+    local v225 = nil
+    local v226 = nil
+    pcall(function()
+        v223 = require(v17.Modules.Core.Net)
+        v225 = v223
+    end)
+    pcall(function()
+        v224 = require(v17.Modules.Core.Data)
+    end)
+    pcall(function()
+        v226 = require(v17.Modules.Game.Inventory.ItemUtils)
+    end)
+    if not v223 then
+        pcall(function()
+            local v234 = v17:WaitForChild("Modules", 5)
+            if v234 then
+                local v235 = v234:FindFirstChild("Core")
+                if v235 then
+                    v223 = require(v235:WaitForChild("Net"))
+                    v225 = v223
+                    v224 = require(v235:WaitForChild("Data"))
+                end
+                local v236 = v234:FindFirstChild("Game")
+                if v236 then
+                    local v237 = v236:FindFirstChild("Inventory")
+                    if v237 then
+                        v226 = require(v237:WaitForChild("ItemUtils"))
+                    end
+                end
+            end
+        end)
+    end
+
+    local v238 = true
+    task.spawn(function()
+        while v238 do
+            task.wait(900)
+            local v240 = v22.Character
+            if v240 and v240:FindFirstChild("Humanoid") then
+                local v241 = v240.Humanoid
+                if v241.Health > 0 then
+                    v241:ChangeState(Enum.HumanoidStateType.Jumping)
+                    task.wait(0.1)
+                    v241:ChangeState(Enum.HumanoidStateType.Landed)
+                end
+            end
+        end
+    end)
+
+    local v242 = {
+        Vector3.new(289, 247, 888),
+        Vector3.new(87.578094, 245.05617, 922.16223),
+        Vector3.new(86.844086, 244.8289, 920.0074),
+        Vector3.new(87.49276, 245.28297, 924.3126),
+        Vector3.new(89.351, 245.19716, 923.49896),
+    }
+    CAST_POSITIONS = v242
+    multiSpotEnabled = false
+    currentSpotIndex = 1
+    catchesPerSpot = 1
+    currentSpotCatches = 0
+    enabledSpots = {true, false, false, false, false}
+
+    local v285 = function()
+        local v247 = v22.Character
+        local v248 = v22:FindFirstChild("Backpack")
+        local v249 = {
+            "FishingRodUltimate",
+            "FishingRodAdvanced",
+            "FishingRodPro",
+            "FishingRodRegular",
+        }
+        local v257 = function(a32)
+            if not a32 or not a32:IsA("Tool") then
+                return false
+            end
+            local v250 = string.lower(tostring(a32.Name))
+            if string.find(v250, "rod") or string.find(v250, "fish") or string.find(v250, "سنار") then
+                return true
+            end
+            for v255, v256 in ipairs(v249) do
+                if a32.Name == v256 then
+                    return true
+                end
+            end
+            return false
+        end
+        if v247 then
+            local v258 = v247:FindFirstChildOfClass("Tool")
+            if v258 then
+                return v258
+            end
+            for v263, v264 in ipairs(v249) do
+                local v265 = v247:FindFirstChild(v264)
+                if v265 then
+                    return v265
+                end
+            end
+            for v270, v271 in ipairs(v247:GetChildren()) do
+                if v257(v271) then
+                    return v271
+                end
+            end
+        end
+        if v248 then
+            for v276, v277 in ipairs(v249) do
+                local v278 = v248:FindFirstChild(v277)
+                if v278 then
+                    return v278
+                end
+            end
+            for v283, v284 in ipairs(v248:GetChildren()) do
+                if v257(v284) then
+                    return v284
+                end
+            end
+        end
+        return nil
+    end
+
+    local v293 = function()
+        local v289 = v285()
+        if not v289 then
+            return false
+        end
+        local v290 = v22.Character
+        local v291 = v290 and v290:FindFirstChildOfClass("Humanoid")
+        local v292 = v291
+        if v291 and v289.Parent == v22.Backpack then
+            v292:EquipTool(v289)
+        end
+        return true
+    end
+
+    getRodAndBaitUid = function()
+        local v297 = v23:FindFirstChild("Items")
+        local v298 = nil
+        local v299 = nil
+        local v300 = nil
+        if v297 then
+            local v301 = v297:FindFirstChild("ItemsHolder")
+            local v302 = v301 and v297.ItemsHolder:FindFirstChild("ItemsScrollingFrame")
+            v298 = nil
+            v299 = nil
+            v300 = nil
+            if v302 then
+                v299 = nil
+                v298 = nil
+                v300 = nil
+                for v307, v308 in pairs(v302:GetChildren()) do
+                    if v308.Name ~= "Folder" and v308.Name ~= "UIGridLayout" and v308.Name ~= "ItemTemplate" then
+                        local v309 = v308:FindFirstChild("ItemName")
+                        if v309 and v309.Text then
+                            local v310 = string.lower(v309.Text)
+                            if string.find(v310, "rod") then
+                                v299 = v308.Name
+                                v298 = v309.Text
+                            end
+                            if string.find(v310, "wormtec") or string.find(v310, "prawntec") then
+                                v300 = v308.Name
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        return v299, v300, v298
+    end
+
+    EquipBaitOnRod = function()
+        local v314, v315 = getRodAndBaitUid()
+        if not v314 or not v315 then
+            return false
+        end
+        pcall(function()
+            require(v17.Modules.Core.Net).get("equip_ammo_on_item", v314, v315)
+        end)
+        return true
+    end
+
+    getEnabledSpotList = function()
+        local v321 = {}
+        for v324 = 1, #CAST_POSITIONS do
+            if enabledSpots[v324] then
+                table.insert(v321, v324)
+            end
+        end
+        if #v321 == 0 then
+            enabledSpots[1] = true
+            table.insert(v321, 1)
+        end
+        return v321
+    end
+
+    getCurrentCastPosition = function()
+        local v325 = getEnabledSpotList()
+        local v326 = false
+        for v331, v332 in ipairs(v325) do
+            if v332 == currentSpotIndex then
+                v326 = true
+                break
+            end
+        end
+        if not v326 then
+            currentSpotIndex = v325[1]
+        end
+        local v333 = #v325 > 1
+        multiSpotEnabled = v333
+        local v334 = CAST_POSITIONS[currentSpotIndex]
+        local v335 = v334 or CAST_POSITIONS[1]
+        return v335
+    end
+
+    local v368 = function(a33, a34)
+        local v365 = a34 or 45
+        local v366 = getCurrentCastPosition()
+        if not v366 or not a33 then
+            return false
+        end
+        local v367 = (a33 - v366).Magnitude <= v365
+        return v367
+    end
+
+    advanceSpotAfterCatch = function()
+        local v369 = getEnabledSpotList()
+        local v370 = #v369 > 1
+        multiSpotEnabled = v370
+        if not multiSpotEnabled then
+            return
+        end
+        currentSpotCatches = currentSpotCatches + 1
+        if catchesPerSpot <= currentSpotCatches then
+            currentSpotCatches = 0
+            local v371 = currentSpotIndex
+            local v372 = 1
+            for v377, v378 in ipairs(v369) do
+                if v378 == v371 then
+                    v372 = v377
+                    break
+                end
+            end
+            currentSpotIndex = v369[v372 % #v369 + 1]
+            v63("تبديل للوزنية " .. currentSpotIndex, "success")
+        end
+    end
+
+    hasBaitInInventory = function()
+        local v380, v379 = getRodAndBaitUid()
+        local v381 = v379 ~= nil
+        return v381
+    end
+
+    local v409 = function()
+        if isSliderOpen and isSliderOpen() then
+            return true
+        end
+        local v383 = nil
+        pcall(function()
+            v383 = getHookedFishName()
+        end)
+        if v383 then
+            return true
+        end
+        local v386 = v22.Character
+        if not v386 then
+            return false
+        end
+        local v387 = v386:FindFirstChildOfClass("Tool")
+        if not v387 then
+            return false
+        end
+        local v388 = false
+        pcall(function()
+            for v396, v397 in ipairs(v387:GetDescendants()) do
+                local v398 = string.lower(tostring(v397.Name))
+                if not v397:IsA("BoolValue") and not v397:IsA("NumberValue") then
+                    if not v397:IsA("Beam") and not v397:IsA("RopeConstraint") and not v397:IsA("RodConstraint") then
+                        if (string.find(v398, "bobber") or string.find(v398, "float") or string.find(v398, "line")) and (v397:IsA("BasePart") or v397:IsA("Attachment") or v397:IsA("BillboardGui")) then
+                            v388 = true
+                            break
+                        end
+                        continue
+                    end
+                    v388 = true
+                    break
+                end
+                if string.find(v398, "cast") or string.find(v398, "fish") or string.find(v398, "line") then
+                    if v397:IsA("BoolValue") and v397.Value == true then
+                        v388 = true
+                        break
+                    end
+                    if v397:IsA("NumberValue") and v397.Value ~= 0 then
+                        v388 = true
+                        break
+                    end
+                    continue
+                end
+            end
+        end)
+        if v388 then
+            return true
+        end
+        pcall(function()
+            for v404, v405 in ipairs(v16:GetChildren()) do
+                local v406 = string.lower(tostring(v405.Name))
+                if not string.find(v406, "bobber") and not string.find(v406, "float") and not string.find(v406, "lure") and not string.find(v406, "bait") then
+                    continue
+                end
+                local v407 = v405:IsA("BasePart")
+                local v408 = v407 and v405 or v405:FindFirstChildWhichIsA("BasePart")
+                if v408 and v368(v408.Position, 50) then
+                    v388 = true
+                    break
+                end
+            end
+        end)
+        return v388
+    end
+
+    __rg_casting = false
+    __rg_lastCast = 0
+    __rg_farmLock = false
+    __rg_noAction = 0
+
+    local v417 = function(a35)
+        if not a35 or not a35:IsA("Tool") then
+            return false
+        end
+        local v410 = string.lower(tostring(a35.Name))
+        if string.find(v410, "rod") or string.find(v410, "سنار") then
+            return true
+        end
+        for v415, v416 in ipairs({
+            "FishingRodUltimate",
+            "FishingRodAdvanced",
+            "FishingRodPro",
+            "FishingRodRegular",
+        }) do
+            if a35.Name == v416 then
+                return true
+            end
+        end
+        return false
+    end
+
+    local v442 = function()
+        local v419 = v22.Character
+        if not v419 then
+            return nil
+        end
+        local v421 = v419:FindFirstChildOfClass("Humanoid")
+        local v422 = v22:FindFirstChild("Backpack")
+        if not v421 then
+            return nil
+        end
+        local v423, v425, v424 = getRodAndBaitUid()
+        local v426 = require(v17.Modules.Core.Net)
+        local v427 = v419:FindFirstChildOfClass("Tool")
+        if v427 and not v417(v427) then
+            pcall(function()
+                v421:UnequipTools()
+            end)
+            task.wait(0.05)
+        end
+        local v430 = nil
+        if v424 then
+            local v431 = v419:FindFirstChild(v424)
+            local v432 = v431 or v422 and v422:FindFirstChild(v424)
+            v430 = v432
+        end
+        local v433 = v430 or v285()
+        local v434 = v433
+        if not v434 and v423 then
+            pcall(function()
+                v426.get("toggle_equip_item", tostring(v423))
+            end)
+            task.wait(0.08)
+            local v437 = v285()
+            v434 = v437
+            if v424 then
+                local v438 = v437 or v419:FindFirstChild(v424) or v422 and v422:FindFirstChild(v424)
+                v434 = v438
+            end
+        end
+        if not v434 then
+            return nil
+        end
+        if v434.Parent ~= v419 and v434.Parent == v422 then
+            v421:EquipTool(v434)
+            task.wait(0.08)
+        end
+        local v439 = v419:FindFirstChildOfClass("Tool")
+        if v439 and v417(v439) then
+            return v439
+        end
+        if v434.Parent == v422 or v434.Parent == v419 then
+            pcall(function()
+                v421:UnequipTools()
+            end)
+            task.wait(0.04)
+            if v434.Parent == v422 then
+                v421:EquipTool(v434)
+                task.wait(0.08)
+            end
+            local v441 = v419:FindFirstChildOfClass("Tool")
+            if v441 and v417(v441) then
+                return v441
+            end
+        end
+        return nil
+    end
+
+    local v458 = function()
+        if __rg_casting then
+            return false
+        end
+        local v444 = os.clock()
+        if v444 - __rg_lastCast < 0.2 then
+            return false
+        end
+        __rg_casting = true
+        __rg_lastCast = v444
+        local v455, v456 = pcall(function()
+            local v449 = v22.Character
+            if not v449 then
+                return false
+            end
+            if not v449:FindFirstChild("HumanoidRootPart") then
+                return false
+            end
+            local v450, v451 = getRodAndBaitUid()
+            if not v451 then
+                v63("ما معك طعم — وقف الرمي", "error")
+                return false
+            end
+            if not v450 then
+                v63("ما لقيت السنارة", "error")
+                return false
+            end
+            local v452 = v442()
+            if not v452 then
+                v63("مسك السنارة فشل — ما تم الرمي", "error")
+                return false
+            end
+            local v453 = require(v17.Modules.Core.Net)
+            local v454 = getCurrentCastPosition()
+            v453.get("equip_ammo_on_item", v450, v451)
+            v453.get("throw_rod", v452, v454)
+            return true
+        end)
+        __rg_casting = false
+        local v457 = v455 and v456 == true
+        return v457
+    end
+
+    local v459 = {
+        Bass = true,
+        Coelacanth = true,
+        Dolphinfish = true,
+        Marlin = true,
+        ["Northern Pike"] = true,
+        Perch = true,
+        Sailfish = true,
+        Salmon = true,
+        Tuna = true,
+    }
+    local v460 = {
+        "Bass",
+        "Perch",
+        "Salmon",
+        "Northern Pike",
+        "Dolphinfish",
+        "Coelacanth",
+        "Tuna",
+        "Sailfish",
+        "Marlin",
+    }
+    local v461 = {
+        Bass = "rbxassetid://115478852920268",
+        Perch = "rbxassetid://120790036643519",
+        ["Northern Pike"] = "rbxassetid://91567798951795",
+        Dolphinfish = "rbxassetid://74102109520530",
+        Coelacanth = "rbxassetid://111492514991742",
+        Sailfish = "rbxassetid://136544080216241",
+        Marlin = "rbxassetid://134139262277770",
+        Salmon = "rbxassetid://116976924917398",
+        Tuna = "rbxassetid://103896149644143",
+    }
+    local v462 = {}
+    for v467, v468 in pairs(v461) do
+        local v469 = string.match(v468, "%d+")
+        if v469 then
+            v462[v467] = string.format("rbxthumb://type=Asset&id=%s&w=150&h=150", v469)
+        else
+            v462[v467] = v468
+        end
+    end
+    local v472 = function(a36)
+        local v470 = v462[a36]
+        local v471 = v470 or v461[a36]
+        return v471
+    end
+    task.spawn(function()
+        local v474 = {}
+        for v481, v482 in pairs(v462) do
+            table.insert(v474, v482)
+        end
+        pcall(function()
+            v21:PreloadAsync(v474)
+        end)
+    end)
+
+    local v486 = nil
+    local v487 = {_blocked = nil, _lastShown = nil}
+    local v488 = 0
+    local v493 = function()
+        if v486 and v486.part and v486.part.Parent then
+            return v486
+        end
+        local v489 = Instance.new("Part")
+        v489.Name = "RXZBlockSpin_FishMark"
+        v489.Anchored = true
+        v489.CanCollide = false
+        v489.CanQuery = false
+        v489.CanTouch = false
+        v489.Transparency = 1
+        v489.Size = Vector3.new(0.2, 0.2, 0.2)
+        v489.Parent = v16
+        local v490 = Instance.new("BillboardGui")
+        v490.Name = "RXZBlockSpin_FishBill"
+        v490.AlwaysOnTop = true
+        v490.LightInfluence = 0
+        v490.Size = UDim2.fromOffset(64, 64)
+        v490.StudsOffset = Vector3.new(0, 1, 0)
+        v490.MaxDistance = 400
+        v490.Enabled = false
+        v490.Parent = v489
+        local v491 = Instance.new("Frame")
+        v491.Size = UDim2.fromScale(1, 1)
+        v491.BackgroundTransparency = 1
+        v491.BorderSizePixel = 0
+        v491.ClipsDescendants = true
+        v491.Parent = v490
+        Instance.new("UICorner", v491).CornerRadius = UDim.new(0, 10)
+        local v492 = Instance.new("ImageLabel")
+        v492.Name = "Pic"
+        v492.BackgroundTransparency = 1
+        v492.BorderSizePixel = 0
+        v492.Size = UDim2.fromScale(1, 1)
+        v492.ScaleType = Enum.ScaleType.Crop
+        v492.Parent = v491
+        v486 = {part = v489, bill = v490, image = v492, name = nil}
+        return v486
+    end
+    local v494 = function()
+        if v486 and v486.bill then
+            v486.bill.Enabled = false
+            v486.name = nil
+        end
+        v487._lastShown = nil
+    end
+    local v495 = function()
+        v494()
+        v487._blocked = nil
+        v487._lastShown = nil
+        v488 = 0
+    end
+    local v504 = function(a37)
+        if not a37 then
+            return
+        end
+        if os.clock() < v488 then
+            return
+        end
+        local v496 = v472(a37)
+        if not v496 then
+            return
+        end
+        local v497 = getCurrentCastPosition()
+        if not v497 then
+            return
+        end
+        local v498 = v493()
+        if v498.name == a37 and v498.bill and v498.bill.Enabled then
+            v498.part.Position = v497 + Vector3.new(0, 4, 0)
+            return
+        end
+        local v499 = v25
+        local v500 = v499 and 40 or 64
+        v498.bill.Size = UDim2.fromOffset(v500, v500)
+        local v501 = v498.bill
+        local v502 = v25
+        local v503 = v502 and 200 or 400
+        v501.MaxDistance = v503
+        v498.part.Position = v497 + Vector3.new(0, 4, 0)
+        if v498.image.Image ~= v496 then
+            v498.image.Image = v496
+        end
+        v498.bill.Enabled = true
+        v498.name = a37
+        v487._lastShown = a37
+        v487._blocked = nil
+    end
+
+    local v518 = function()
+        local v505 = {}
+        local v506 = {}
+        for v511, v512 in ipairs(v460) do
+            if v459[v512] ~= nil then
+                table.insert(v505, v512)
+                v506[v512] = true
+            end
+        end
+        for v517 in pairs(v459) do
+            if not v506[v517] then
+                table.insert(v505, v517)
+            end
+        end
+        return v505
+    end
+    local v519 = {}
+    for v524, v525 in ipairs(v460) do
+        v519[v525] = false
+    end
+    for v530 in pairs(v459) do
+        if v519[v530] == nil then
+            v519[v530] = false
+        end
+    end
+
+    local v531 = false
+    local v532 = 0
+    local v533 = false
+    local v534 = false
+    local v535 = {}
+    for v540, v541 in ipairs(v460) do
+        v535[v541] = false
+    end
+    for v546 in pairs(v459) do
+        if v535[v546] == nil then
+            v535[v546] = false
+        end
+    end
+    local v547 = false
+    local v548 = false
+    local v549 = {}
+    local v550 = nil
+
+    local v552 = function()
+        pcall(function()
+            v19:SendKeyEvent(true, Enum.KeyCode.Two, false, game)
+            task.wait(0.05)
+            v19:SendKeyEvent(false, Enum.KeyCode.Two, false, game)
+        end)
+    end
+    local v554 = function(a38)
+        if not a38 then
+            return nil
+        end
+        local v553 = tostring(a38)
+        if v459[v553] == nil then
+            return nil
+        end
+        return v553
+    end
+    local v559 = function(a39)
+        if not a39 or a39 == "" then
+            return nil
+        end
+        local v555 = tostring(a39)
+        local v556 = v554(v555)
+        if v556 then
+            return v556
+        end
+        local v557 = string.match(v555, "%(([^%)]+)%)")
+        if v557 then
+            local v558 = v554(string.gsub(string.gsub(v557, "^%s+", ""), "%s+$", ""))
+            if v558 then
+                return v558
+            end
+        end
+        return nil
+    end
+    local v565 = function(a40)
+        local v560 = a40
+        for v562 = 1, 8 do
+            if not v560 then
+                break
+            end
+            local v563 = v554(v560.Name)
+            if v563 then
+                return v563
+            end
+            if v560:IsA("Model") or v560:IsA("Folder") then
+                local v564 = v554(v560.Name)
+                if v564 then
+                    return v564
+                end
+            end
+            v560 = v560.Parent
+        end
+        return nil
+    end
+    local v596 = function(a41)
+        if not a41 then
+            return nil
+        end
+        local v566 = v565(a41)
+        if v566 then
+            return v566
+        end
+        local v567 = v559(a41.Name)
+        if v567 then
+            return v567
+        end
+        if a41:IsA("StringValue") or a41:IsA("ObjectValue") then
+            local v568 = v559(tostring(a41.Value))
+            if v568 then
+                return v568
+            end
+        end
+        for v573, v574 in pairs(a41:GetAttributes()) do
+            local v575 = v559(tostring(v574))
+            if v575 then
+                return v575
+            end
+        end
+        if a41:IsA("BillboardGui") or a41:IsA("SurfaceGui") or a41:IsA("TextLabel") or a41:IsA("TextButton") then
+            local v576 = a41.Text
+            if v576 then
+                local v577 = v559(v576)
+                if v577 then
+                    return v577
+                end
+            end
+        end
+        local v578, v579, v580 = ipairs(a41:GetChildren())
+        local v581 = v580
+        local v582 = v578
+        local v583 = v579
+        while true do
+            local v584, v585 = v582(v583, v581)
+            if v584 == nil then
+                break
+            end
+            v581 = v584
+            if not v585:IsA("BillboardGui") and not v585:IsA("SurfaceGui") then
+                if not v585:IsA("TextLabel") and not v585:IsA("TextButton") then
+                    continue
+                end
+                local v595 = v559(v585.Text)
+                if v595 then
+                    return v595
+                end
+                continue
+            end
+            for v592, v593 in ipairs(v585:GetChildren()) do
+                if not v593:IsA("TextLabel") and not v593:IsA("TextButton") then
+                    continue
+                end
+                local v594 = v559(v593.Text)
+                if v594 then
+                    return v594
+                end
+            end
+            v581 = v584
+        end
+        return nil
+    end
+
+    local v614 = function()
+        local v597 = v22.Character
+        if not v597 then
+            return nil
+        end
+        local v598 = v597:FindFirstChildOfClass("Tool")
+        if v598 then
+            local v599 = string.lower(tostring(v598.Name))
+            if string.find(v599, "rod") or string.find(v599, "fish") or string.find(v599, "سنار") then
+                return v598
+            end
+        end
+        for v604, v605 in ipairs({
+            "FishingRodUltimate",
+            "FishingRodAdvanced",
+            "FishingRodPro",
+            "FishingRodRegular",
+        }) do
+            local v606 = v597:FindFirstChild(v605)
+            if v606 then
+                return v606
+            end
+        end
+        for v611, v612 in ipairs(v597:GetChildren()) do
+            if not v612:IsA("Tool") then
+                continue
+            end
+            local v613 = string.lower(tostring(v612.Name))
+            if string.find(v613, "rod") or string.find(v613, "fish") or string.find(v613, "سنار") then
+                return v612
+            end
+        end
+        return nil
+    end
+
+    local v689 = function()
+        local v620 = function(a42, a43)
+            local v619 = a42
+            while v619 do
+                if v619 == a43 then
+                    return true
+                end
+                v619 = v619.Parent
+            end
+            return false
+        end
+        local v644 = function(a44, a45)
+            local v625 = {}
+            for v634, v635 in ipairs({"Attachment0", "Attachment1", "Part0", "Part1"}) do
+                local v636, v637 = pcall(function()
+                    return a44[v635]
+                end)
+                if v636 and typeof(v637) == "Instance" then
+                    if v637:IsA("Attachment") then
+                        table.insert(v625, v637.Parent)
+                    else
+                        table.insert(v625, v637)
+                    end
+                end
+            end
+            for v642, v643 in ipairs(v625) do
+                if v643 and not v620(v643, a45) then
+                    return v643
+                end
+            end
+            return v625[2]
+        end
+        local v645 = nil
+        v645 = function(a46, a47)
+            if not a46 then
+                return nil
+            end
+            local v648 = a47 or 0
+            local v649 = v648
+            local v650 = v596(a46)
+            if v650 then
+                return v650
+            end
+            if v649 >= 3 then
+                return nil
+            end
+            for v655, v656 in ipairs(a46:GetChildren()) do
+                local v657 = v645(v656, v649 + 1)
+                if v657 then
+                    return v657
+                end
+            end
+            if a46.Parent and a46.Parent ~= v16 and not a46.Parent:IsA("Tool") then
+                return v596(a46.Parent)
+            end
+            return nil
+        end
+        local v684 = function(a48)
+            if not a48 then
+                return nil
+            end
+            local v661 = nil
+            pcall(function()
+                local v662 = v645(a48, 0)
+                if not v662 then
+                    local v663, v664, v665 = ipairs(a48:GetDescendants())
+                    local v666 = v665
+                    local v667 = v663
+                    local v668 = v664
+                    while true do
+                        local v669, v670 = v667(v668, v666)
+                        if v669 == nil then
+                            break
+                        end
+                        v666 = v669
+                        local v671 = v596(v670)
+                        if not v671 then
+                            if not v670:IsA("Beam") and not v670:IsA("Trail") and not v670:IsA("RopeConstraint") and not v670:IsA("RodConstraint") and not v670:IsA("SpringConstraint") then
+                                continue
+                            end
+                            local v672 = v644(v670, a48)
+                            local v673 = v672
+                            if v672 then
+                                local v674
+                                if v672:IsA("BasePart") then
+                                    v674 = v672.Position
+                                else
+                                    local v675 = v672:FindFirstChildWhichIsA("BasePart")
+                                    v674 = nil
+                                    if v675 then
+                                        v674 = v675.Position
+                                    end
+                                end
+                                local v676 = v674
+                                if v674 then
+                                    if v368(v674, 55) then
+                                        v676 = false
+                                    else
+                                        v676 = true
+                                    end
+                                end
+                                if v676 then
+                                    continue
+                                end
+                                local v677 = v645(v672, 0)
+                                if not v677 then
+                                    for v681 = 1, 6 do
+                                        if not v673 then
+                                            break
+                                        end
+                                        local v682 = v596(v673)
+                                        if not v682 then
+                                            local v683 = v673.Parent
+                                            v673 = v683
+                                            if not v683 or v683 == v16 or v683:IsA("Tool") then
+                                                break
+                                            end
+                                            continue
+                                        end
+                                        v661 = v682
+                                        return
+                                    end
+                                    v666 = v669
+                                    continue
+                                end
+                                v661 = v677
+                                return
+                            end
+                            continue
+                        end
+                        v661 = v671
+                        return
+                    end
+                    return
+                end
+                v661 = v662
+            end)
+            return v661
+        end
+        local v687, v688 = pcall(function()
+            local v685 = v614()
+            local v686 = v685 or v285()
+            if not v686 then
+                return nil
+            end
+            return v684(v686)
+        end)
+        if not v687 then
+            return nil
+        end
+        return v688
+    end
+
+    local v692 = function(a49)
+        local v690 = v531
+        local v691 = v690 and a49 and v519[a49] == true
+        return v691
+    end
+
+    local v701 = function(a50, a51)
+        if v533 then
+            return false
+        end
+        v533 = true
+        task.wait(1)
+        if not a51 and v532 > 0 then
+            local v695 = 0
+            while v695 < v532 and v531 do
+                task.wait(0.05)
+                v695 = v695 + 0.05
+            end
+        end
+        if not v531 then
+            v533 = false
+            return false
+        end
+        pcall(function()
+            local v698 = v22.Character
+            local v699 = v698 and v698:FindFirstChildOfClass("Humanoid")
+            local v700 = v699
+            if v700 then
+                v700:UnequipTools()
+                task.wait(0.03)
+                v293()
+            else
+                v552()
+                v552()
+            end
+        end)
+        v63("تسكيب: " .. tostring(a50), "error")
+        v533 = false
+        return true
+    end
+
+    task.spawn(function()
+        while true do
+            task.wait(0.1)
+            if v533 or v534 then
+                continue
+            end
+            local v702 = v689()
+            if not v702 then
+                if not v487._blocked and not v487._lastShown then
+                    continue
+                end
+                v487._blocked = nil
+                v495()
+                v487._blocked = nil
+                v488 = 0
+                continue
+            end
+            if v531 and v519[v702] == true then
+                v504(v702)
+                v701(v702)
+                v495()
+                continue
+            end
+            v504(v702)
+        end
+    end)
+
+    -- ============================================================
+    -- 🚗 AutoSell System (MZN Engine: Car Underground -18 Tween)
+    -- ============================================================
+    local v703 = false
+    local v711 = Vector3.new(-253, 258, 379)
+    local autoSellBusy = false
+    local autoSellTrigger = false
+    local UNDERGROUND_DEPTH = 18
+
+    local function getPlayerCar()
+        local char = v22.Character
+        if not char then return nil, nil end
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if not hum or not hum.SeatPart then return nil, nil end
+        local seat = hum.SeatPart
+        if not (seat:IsA("VehicleSeat") or seat:IsA("Seat")) then return nil, nil end
+        local carModel = seat:FindFirstAncestorOfClass("Model")
+        if not carModel or carModel == char then
+            carModel = seat.Parent
+        end
+        if carModel and not carModel.PrimaryPart then
+            pcall(function() carModel.PrimaryPart = seat end)
+        end
+        return carModel, seat
+    end
+
+    local savedCarCollisions = {}
+    local function disableCarCollisions(car)
+        savedCarCollisions = {}
+        for _, p in ipairs(car:GetDescendants()) do
+            if p:IsA("BasePart") then
+                savedCarCollisions[p] = p.CanCollide
+                p.CanCollide = false
+            end
+        end
+    end
+
+    local function restoreCarCollisions()
+        for p, s in pairs(savedCarCollisions) do
+            if p and p.Parent then
+                p.CanCollide = s
+            end
+        end
+        savedCarCollisions = {}
+    end
+
+    local function smoothDiveOrSurface(carModel, targetPos)
+        local primary = carModel.PrimaryPart or carModel:FindFirstChildWhichIsA("BasePart")
+        if not primary then return end
+        
+        local cframeVal = Instance.new("CFrameValue")
+        local startPos = carModel:GetPivot().Position
+        local startLook = carModel:GetPivot().LookVector
+        local flatLook = Vector3.new(startLook.X, 0, startLook.Z)
+        if flatLook.Magnitude < 0.001 then flatLook = Vector3.new(0, 0, 1) end
+        cframeVal.Value = CFrame.lookAt(startPos, startPos + flatLook.Unit)
+        
+        local tw = v14:Create(cframeVal, TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+            Value = CFrame.lookAt(targetPos, targetPos + flatLook.Unit)
+        })
+        
+        local conn = v15.Heartbeat:Connect(function()
+            if not carModel or not carModel.Parent then return end
+            carModel:PivotTo(cframeVal.Value)
+            if primary and primary.Parent then
+                primary.AssemblyLinearVelocity = Vector3.zero
+                primary.AssemblyAngularVelocity = Vector3.zero
+            end
+        end)
+        
+        tw:Play()
+        tw.Completed:Wait()
+        if conn then conn:Disconnect() end
+        pcall(function() cframeVal:Destroy() end)
+    end
+
+    local function smartUndergroundDrive(carModel, targetPos, speed)
+        local primary = carModel.PrimaryPart or carModel:FindFirstChildWhichIsA("BasePart")
+        if not primary then return end
+        
+        local expectedPos = carModel:GetPivot().Position
+        local reached = false
+        
+        local connection
+        connection = v15.Heartbeat:Connect(function(dt)
+            if not carModel or not carModel.Parent then
+                reached = true
+                return
+            end
+            
+            local direction = (targetPos - expectedPos)
+            local distToTarget = direction.Magnitude
+            local moveDist = speed * dt
+            
+            if distToTarget <= moveDist or distToTarget < 0.25 then
+                expectedPos = targetPos
+                local curLook = carModel:GetPivot().LookVector
+                local flatLook = Vector3.new(curLook.X, 0, curLook.Z)
+                if flatLook.Magnitude < 0.001 then flatLook = Vector3.new(0, 0, 1) end
+                carModel:PivotTo(CFrame.lookAt(expectedPos, expectedPos + flatLook.Unit))
+                if primary and primary.Parent then
+                    primary.AssemblyLinearVelocity = Vector3.zero
+                    primary.AssemblyAngularVelocity = Vector3.zero
+                end
+                reached = true
+                return
+            end
+            
+            direction = direction.Unit
+            local flatDir = Vector3.new(direction.X, 0, direction.Z)
+            if flatDir.Magnitude < 0.001 then flatDir = Vector3.new(0, 0, 1) end
+            flatDir = flatDir.Unit
+            
+            expectedPos = expectedPos + (direction * moveDist)
+            carModel:PivotTo(CFrame.lookAt(expectedPos, expectedPos + flatDir))
+            if primary and primary.Parent then
+                primary.AssemblyLinearVelocity = Vector3.zero
+                primary.AssemblyAngularVelocity = Vector3.zero
+            end
+        end)
+        
+        while not reached do
+            task.wait(0.03)
+        end
+        if connection then
+            connection:Disconnect()
+        end
+    end
+
+    local function flyCarTo(carModel, targetPos, speed)
+        speed = speed or 140
+        local primary = carModel.PrimaryPart or carModel:FindFirstChildWhichIsA("BasePart")
+        if not primary then return end
+        
+        disableCarCollisions(carModel)
+        
+        local currentPos = carModel:GetPivot().Position
+        local isVertical = math.abs(targetPos.Y - currentPos.Y) > 3 and (Vector2.new(targetPos.X, targetPos.Z) - Vector2.new(currentPos.X, currentPos.Z)).Magnitude < 6
+
+        if isVertical then
+            smoothDiveOrSurface(carModel, targetPos)
+        else
+            smartUndergroundDrive(carModel, targetPos, speed)
+        end
+        
+        restoreCarCollisions()
+        if primary and primary.Parent then
+            primary.AssemblyLinearVelocity = Vector3.zero
+            primary.AssemblyAngularVelocity = Vector3.zero
+        end
+    end
+
+    local v732 = function()
+        local v715 = false
+        pcall(function()
+            if v226 and v224 then
+                v226.iterate_through_items(v224, function(a52)
+                    if a52 and a52.name and v459[a52.name] then
+                        v715 = true
+                    end
+                end)
+            end
+        end)
+        if v715 then
+            return true
+        end
+        pcall(function()
+            local v723 = v23:FindFirstChild("Items")
+            local v724 = v723 and v723:FindFirstChild("ItemsHolder") and v723.ItemsHolder:FindFirstChild("ItemsScrollingFrame")
+            if not v724 then
+                return
+            end
+            for v729, v730 in pairs(v724:GetChildren()) do
+                if v730.Name ~= "Folder" and v730.Name ~= "UIGridLayout" and v730.Name ~= "ItemTemplate" then
+                    local v731 = v730:GetAttribute("ItemType")
+                    if v731 and string.lower(tostring(v731)) == "fish" then
+                        v715 = true
+                        break
+                    end
+                end
+            end
+        end)
+        pcall(function()
+            local bp = v22:FindFirstChild("Backpack")
+            if bp then
+                for _, it in ipairs(bp:GetChildren()) do
+                    if v459[it.Name] or it.Name:lower():find("fish") or it.Name:lower():find("سمك") then
+                        v715 = true
+                        break
+                    end
+                end
+            end
+        end)
+        return v715
+    end
+
+    local v740 = function()
+        local v737 = pcall(function()
+            if v223 then
+                v223.get("sell_all_fish")
+            end
+        end)
+        local v738 = pcall(function()
+            require(game:GetService("ReplicatedStorage").Modules.Core.Net).get("sell_all_fish")
+        end)
+        local v739 = v737 or v738
+        return v739
+    end
+
+    task.spawn(function()
+        while true do
+            task.wait(1)
+            if not v703 or autoSellBusy then
+                continue
+            end
+
+            local carModel, seat = getPlayerCar()
+            if not carModel or not seat then
+                continue
+            end
+
+            local hasFish = v732()
+            if not hasFish and not autoSellTrigger then
+                continue
+            end
+            autoSellTrigger = false
+
+            autoSellBusy = true
+            pcall(function()
+                local startPos = carModel:GetPivot().Position
+                v63("🚗 بدأت الرحلة بالسيارة للبيع...", "success")
+
+                local underPos = Vector3.new(startPos.X, startPos.Y - UNDERGROUND_DEPTH, startPos.Z)
+                flyCarTo(carModel, underPos, 80)
+                task.wait(0.2)
+
+                local sellUnder = Vector3.new(v711.X, v711.Y - UNDERGROUND_DEPTH, v711.Z)
+                v63("🚇 انتقال تحت الأرض إلى نقطة البيع...", "success")
+                flyCarTo(carModel, sellUnder, 160)
+                task.wait(0.2)
+
+                v63("📍 الصعود لنقطة البيع...", "success")
+                flyCarTo(carModel, v711, 80)
+                task.wait(0.4)
+
+                local sold = false
+                for i = 1, 5 do
+                    v740()
+                    task.wait(0.5)
+                    if not v732() then
+                        sold = true
+                        break
+                    end
+                    task.wait(0.2)
+                end
+
+                if sold then
+                    v63("💰 تم البيع وتأكيده بنجاح!", "success")
+                else
+                    v63("💰 تم إرسال أمر البيع للريموت!", "success")
+                end
+                task.wait(0.4)
+
+                flyCarTo(carModel, sellUnder, 80)
+                task.wait(0.2)
+
+                v63("🚇 الرجوع للموقع الأصلي...", "success")
+                flyCarTo(carModel, underPos, 160)
+                task.wait(0.2)
+
+                flyCarTo(carModel, startPos, 80)
+                task.wait(0.3)
+                v63("✅ رجعت لموقعك بنجاح! كمل صيد", "success")
+            end)
+            autoSellBusy = false
+        end
+    end)
+
+    local v745 = {totalFish = 0, fishCaught = {}, sessionStart = os.time()}
+    local v746 = {}
+    local v747 = nil
+    local v751 = function(a53)
+        if not a53 or a53 == "" then
+            return
+        end
+        v745.totalFish = v745.totalFish + 1
+        local v748 = v745.fishCaught
+        local v749 = v745.fishCaught[a53]
+        local v750 = v749 or 0
+        v748[a53] = v750 + 1
+        v63("🐟 تم صيد: " .. a53 .. " (×" .. v745.fishCaught[a53] .. ")", "success")
+        if v747 then
+            v747()
+        end
+        if webhookAutoNotify then
+            onFishCaughtForWebhook(a53)
+        end
+    end
+
+    local v776 = function()
+        local v768 = function()
+            pcall(function()
+                if not v226 or not v224 then
+                    return
+                end
+                v226.iterate_through_items(v224, function(a54)
+                    if not a54 or not a54.name then
+                        return
+                    end
+                    if v459[a54.name] then
+                        local v764 = a54.name
+                        local v765 = a54.guid
+                        local v766 = v765 or ""
+                        local v767 = v764 .. "_" .. v766
+                        if not v746[v767] then
+                            v746[v767] = true
+                            v751(a54.name)
+                        end
+                    end
+                end)
+            end)
+        end
+        if v224 and v224.hook then
+            v224.hook("items", function()
+                v768()
+                if v747 then
+                    v747()
+                end
+            end)
+        end
+        if v224 and v224.item_added then
+            local v771 = v224.item_added
+            v224.item_added = function(a55)
+                if v771 then
+                    v771(a55)
+                end
+                if a55 and a55.name and v459[a55.name] then
+                    local v772 = a55.name
+                    local v773 = a55.guid
+                    local v774 = v773 or ""
+                    local v775 = v772 .. "_" .. v774
+                    if not v746[v775] then
+                        v746[v775] = true
+                        v751(a55.name)
+                    end
+                end
+                if v747 then
+                    v747()
+                end
+            end
+        end
+        task.delay(1.5, v768)
+    end
+
+    local v777 = Enum.KeyCode.Q
+    local v812 = false
+    local v813 = nil
+    local v814 = nil
+    local v815 = false
+    autoBuyBaitEnabled = false
+    local v816 = Vector3.new(-135.954, 251.811, 154.499)
+    BAIT_SHOP_POS = v816
+    BAIT_BUY_MAX_DIST = 25
+    BAIT_TIERS = {
+        {Name = "PrawntecUltimate", Level = 45},
+        {Name = "PrawntecPro", Level = 30},
+        {Name = "PrawntecRegular", Level = 25},
+        {Name = "WormtecUltimate", Level = 15},
+        {Name = "WormtecPro", Level = 8},
+        {Name = "WormtecRegular", Level = 1},
+    }
+    local v817 = {}
+    local v818 = nil
+    local v819 = nil
+    local v820 = nil
+    local v821 = nil
+    local v822 = nil
+    local v823 = nil
+    local v824 = nil
+    local v825 = nil
+    local v826 = nil
+    local v827 = nil
+    local v828 = nil
+    local v829 = nil
+    local v830 = {}
+    local v831 = {}
+    local v832 = nil
+    local v833 = nil
+
+    local v842 = function()
+        for v838, v839 in ipairs(game:GetDescendants()) do
+            if v839:IsA("ModuleScript") and v839.Name == "SliderMinigame" then
+                local v840, v841 = pcall(require, v839)
+                if v840 then
+                    v814 = v841
+                end
+                break
+            end
+        end
+    end
+    local v843 = nil
+    local v844 = false
+    local v845 = 0
+    pcall(function()
+        local v848 = require(game.ReplicatedStorage.Modules.Game.Keybinds)
+        if v848 and v848.hook_action then
+            local v850 = v848.hook_action
+            v848.hook_action = function(a56, a57, ...)
+                if a56 == "minigame_click" then
+                    v843 = a57
+                end
+                local v851 = table.pack(...)
+                v851.n = 3 + v851.n - 1
+                table.move(v851, 1, v851.n, 3, v851)
+                v851[1] = a56
+                v851[2] = a57
+                return v850(table.unpack(v851, 1, v851.n))
+            end
+        end
+    end)
+    local v856 = function()
+        if v843 then
+            pcall(v843, true)
+        elseif mouse1click then
+            pcall(mouse1click)
+        else
+            pcall(function()
+                local v855 = game:GetService("VirtualInputManager")
+                v855:SendMouseButtonEvent(100, 100, 0, true, game, 1)
+                task.wait(0.03)
+                v855:SendMouseButtonEvent(100, 100, 0, false, game, 1)
+            end)
+        end
+    end
+
+    local v869 = function()
+        if not v814 then
+            return false
+        end
+        local v866, v867 = pcall(function()
+            local v862 = v814.needle_pos.get()
+            local v863 = v814.target_pos.get()
+            local v864 = v814.target_size.get() / 2
+            local v865 = v863 - v864 <= v862 and v862 <= v863 + v864
+            return v865
+        end)
+        local v868 = v866 and v867 == true
+        return v868
+    end
+
+    local v871 = function()
+        if not v814 or not v814.enabled or not v814.enabled.get then
+            return false
+        end
+        local v870 = v814.enabled.get() == true
+        return v870
+    end
+
+    local v873 = function()
+        if not v814 or not v814.enabled or not v814.enabled.get then
+            return false
+        end
+        if not v871() then
+            return false
+        end
+        if v869() then
+            local v872 = os.clock()
+            if v872 - v845 >= 0.15 then
+                v856()
+                v845 = v872
+                return true
+            end
+        end
+        return false
+    end
+
+    local v879 = function()
+        if v844 then
+            return
+        end
+        v844 = true
+        task.spawn(function()
+            while v815 do
+                v873()
+                task.wait(0.02)
+            end
+            v844 = false
+        end)
+    end
+
+    task.spawn(function()
+        while true do
+            task.wait(0.15)
+            if not v815 or not v871() or v844 then
+                continue
+            end
+            v879()
+        end
+    end)
+
+    local v880 = function()
+        v856()
+    end
+
+    getFishingLevelSafe = function()
+        local v883 = 1
+        pcall(function()
+            local v888 = v224
+            local v889 = v888 or require(v17.Modules.Core.Data)
+            local v890 = require(v17.Modules.Game.Skills.XPFormula)
+            if v889 and v889.xp then
+                local v891 = 0
+                for v896, v897 in pairs(v889.xp) do
+                    if string.lower(tostring(v896)) == "fishing" or string.find(string.lower(tostring(v896)), "fish") then
+                        v891 = v897
+                        break
+                    end
+                    continue
+                end
+                if v890 and v890.xp_to_level then
+                    local v898 = v890.xp_to_level(v891)
+                    local v899 = v898 or 1
+                    v883 = v899
+                end
+            end
+        end)
+        return v883
+    end
+
+    getBestBaitName = function()
+        local v900 = getFishingLevelSafe()
+        for v905, v906 in ipairs(BAIT_TIERS) do
+            if v906.Level <= v900 then
+                return v906.Name
+            end
+        end
+        return "WormtecRegular"
+    end
+
+    task.spawn(function()
+        while true do
+            task.wait(0.25)
+            if autoBuyBaitEnabled then
+                pcall(function()
+                    local v913 = v22.Character
+                    local v914 = v913 and v913:FindFirstChild("HumanoidRootPart")
+                    local v915 = v914
+                    if not v914 then
+                        return
+                    end
+                    if BAIT_BUY_MAX_DIST < (v915.Position - BAIT_SHOP_POS).Magnitude then
+                        return
+                    end
+                    local v916 = v16:FindFirstChild("ShopZone_Hardware")
+                    local v917 = v916 or v16:WaitForChild("ShopZone_Hardware", 1)
+                    if not v917 then
+                        return
+                    end
+                    require(v17.Modules.Core.Net).get("purchase_consumable", v917, "PrawntecUltimate")
+                end)
+            end
+        end
+    end)
+
+    local v935 = function()
+        if v534 or __rg_farmLock then
+            return
+        end
+        __rg_farmLock = true
+        v534 = true
+        currentSpotIndex = 1
+        currentSpotCatches = 0
+        __rg_casting = false
+        v533 = false
+        __rg_lastCast = 0
+        local v919 = os.clock()
+        __rg_noAction = v919
+        v63("Auto Farm ON", "success")
+        if v813 then
+            pcall(function()
+                task.cancel(v813)
+            end)
+            v813 = nil
+        end
+        v813 = task.spawn(function()
+            while v534 do
+                if not pcall(function()
+                    local v924, v925, v926, v927, v928, v929, v930, v931, v932, v933
+                    v933 = 1
+                    while true do
+                        if v933 == 1 then
+                            if v534 then
+                                v933 = 2
+                            else
+                                v933 = 49
+                            end
+                        elseif v933 == 2 then
+                            if hasBaitInInventory() then
+                                v933 = 3
+                            else
+                                v933 = 48
+                            end
+                        elseif v933 == 3 then
+                            if v534 and __rg_casting then
+                                v933 = 47
+                            else
+                                v933 = 4
+                            end
+                        elseif v933 == 4 then
+                            if v534 then
+                                v933 = 5
+                            else
+                                v933 = 46
+                            end
+                        elseif v933 == 5 then
+                            __rg_lastCast = 0
+                            if v458() then
+                                v933 = 6
+                            else
+                                v933 = 45
+                            end
+                        elseif v933 == 6 then
+                            v924 = os.clock() + 45
+                            v925 = nil
+                            v926 = nil
+                            v933 = 7
+                        elseif v933 == 7 then
+                            v927 = v534
+                            v928 = v927
+                            if v927 then
+                                v933 = 8
+                            else
+                                v933 = 11
+                            end
+                        elseif v933 == 8 then
+                            if os.clock() < v924 then
+                                v933 = 10
+                            else
+                                v933 = 9
+                            end
+                        elseif v933 == 9 then
+                            v928 = false
+                            v933 = 11
+                        elseif v933 == 10 then
+                            v928 = true
+                            v933 = 11
+                        elseif v933 == 11 then
+                            v929 = false
+                            if v928 then
+                                v933 = 12
+                            else
+                                v933 = 22
+                            end
+                        elseif v933 == 12 then
+                            if v871() then
+                                v933 = 13
+                            else
+                                v933 = 14
+                            end
+                        elseif v933 == 13 then
+                            v925 = 2
+                            v933 = 23
+                        elseif v933 == 14 then
+                            v930 = v689()
+                            v926 = v930
+                            if v930 then
+                                v933 = 15
+                            else
+                                v933 = 19
+                            end
+                        elseif v933 == 15 then
+                            v504(v930)
+                            if v692(v930) and not v533 then
+                                v933 = 23
+                            else
+                                v933 = 16
+                            end
+                        elseif v933 == 16 then
+                            if v409() then
+                                v933 = 17
+                            else
+                                v933 = 18
+                            end
+                        elseif v933 == 17 then
+                            task.wait(0.08)
+                            v933 = 7
+                        elseif v933 == 18 then
+                            v925 = 1
+                            v933 = 23
+                        elseif v933 == 19 then
+                            if v409() then
+                                v933 = 20
+                            else
+                                v933 = 21
+                            end
+                        elseif v933 == 20 then
+                            task.wait(0.08)
+                            v933 = 7
+                        elseif v933 == 21 then
+                            v925 = 1
+                            v933 = 23
+                        elseif v933 == 22 then
+                            v925 = 1
+                            v933 = 23
+                        elseif v933 == 23 then
+                            if v925 == 1 then
+                                v933 = 29
+                            else
+                                v933 = 24
+                            end
+                        elseif v933 == 24 then
+                            if v925 == 2 then
+                                v933 = 28
+                            else
+                                v933 = 25
+                            end
+                        elseif v933 == 25 then
+                            if v532 > 0 then
+                                v933 = 26
+                            else
+                                v933 = 27
+                            end
+                        elseif v933 == 26 then
+                            task.wait(v532)
+                            v933 = 27
+                        elseif v933 == 27 then
+                            v504(v926)
+                            v701(v926, true)
+                            v495()
+                            advanceSpotAfterCatch()
+                            return
+                        elseif v933 == 28 then
+                            v929 = true
+                            v933 = 29
+                        elseif v933 == 29 then
+                            if v534 then
+                                v933 = 30
+                            else
+                                v933 = 44
+                            end
+                        elseif v933 == 30 then
+                            if v929 then
+                                v933 = 31
+                            else
+                                v933 = 43
+                            end
+                        elseif v933 == 31 then
+                            v931 = v689()
+                            if v931 then
+                                v933 = 32
+                            else
+                                v933 = 33
+                            end
+                        elseif v933 == 32 then
+                            v504(v931)
+                            v933 = 33
+                        elseif v933 == 33 then
+                            if v931 and v692(v931) then
+                                v933 = 38
+                            else
+                                v933 = 34
+                            end
+                        elseif v933 == 34 then
+                            v932 = 0
+                            v933 = 35
+                        elseif v933 == 35 then
+                            if v534 and v871() and v932 < 30 then
+                                v933 = 37
+                            else
+                                v933 = 36
+                            end
+                        elseif v933 == 36 then
+                            v495()
+                            v933 = 42
+                        elseif v933 == 37 then
+                            v873()
+                            task.wait(0.02)
+                            v932 = v932 + 0.02
+                            v933 = 35
+                        elseif v933 == 38 then
+                            if v532 > 0 then
+                                v933 = 39
+                            else
+                                v933 = 40
+                            end
+                        elseif v933 == 39 then
+                            task.wait(v532)
+                            v933 = 40
+                        elseif v933 == 40 then
+                            if v534 then
+                                v933 = 41
+                            else
+                                v933 = 42
+                            end
+                        elseif v933 == 41 then
+                            v504(v931)
+                            v701(v931, true)
+                            v495()
+                            v933 = 42
+                        elseif v933 == 42 then
+                            advanceSpotAfterCatch()
+                            v933 = 43
+                        elseif v933 == 43 then
+                            return
+                        elseif v933 == 44 then
+                            return
+                        elseif v933 == 45 then
+                            task.wait(0.1)
+                            return
+                        elseif v933 == 46 then
+                            return
+                        elseif v933 == 47 then
+                            task.wait(0.1)
+                            v933 = 3
+                        elseif v933 == 48 then
+                            v63("ما معك طعم", "error")
+                            task.wait(2)
+                            return
+                        elseif v933 == 49 then
+                            return
+                        end
+                    end
+                end) then
+                    __rg_casting = false
+                    task.wait(0.3)
+                end
+            end
+        end)
+        task.delay(0.2, function()
+            __rg_farmLock = false
+        end)
+    end
+
+    local v947 = function()
+        if __rg_farmLock and not v534 then
+            return
+        end
+        if not v534 then
+            return
+        end
+        __rg_farmLock = true
+        v534 = false
+        __rg_casting = false
+        v533 = false
+        if v813 then
+            pcall(function()
+                task.cancel(v813)
+            end)
+            v813 = nil
+        end
+        pcall(function()
+            local v943 = v22.Character
+            local v944 = v943 and v943:FindFirstChild("HumanoidRootPart")
+            local v945 = v944
+            if v944 then
+                v945.Anchored = false
+            end
+        end)
+        currentSpotIndex = 1
+        currentSpotCatches = 0
+        v63("Auto Farm OFF", "error")
+        task.delay(0.15, function()
+            __rg_farmLock = false
+        end)
+    end
+
+    local v948 = function()
+        if __rg_farmLock then
+            return
+        end
+        if v534 then
+            v947()
+        else
+            v935()
+        end
+    end
+
+    local v949 = {}
+    for v954 in pairs(v459) do
+        v949[v954] = false
+    end
+    local v955 = ""
+    local v956 = false
+    local v964 = function(a58)
+        if v955 == "" or #v955 < 20 then
+            return false
+        end
+        return pcall(function()
+            local v963 = v20:JSONEncode({content = a58})
+            if request then
+                request({
+                    Url = v955,
+                    Method = "POST",
+                    Headers = {["Content-Type"] = "application/json"},
+                    Body = v963,
+                })
+            elseif syn and syn.request then
+                syn.request({
+                    Url = v955,
+                    Method = "POST",
+                    Headers = {["Content-Type"] = "application/json"},
+                    Body = v963,
+                })
+            end
+        end)
+    end
+
+    local v965 = {}
+    local v966 = {}
+    local v982 = function(a59)
+        for v971, v972 in pairs(v966) do
+            local v973 = v971 == a59
+            v972.Visible = v973
+        end
+        for v978, v979 in pairs(v965) do
+            if v978 == a59 then
+                local v981 = {
+                    BackgroundColor3 = v64.AccentDim,
+                    BackgroundTransparency = 0,
+                }
+                v37(v979, TweenInfo.new(0.15), v981)
+                if v979:FindFirstChild("TextLabel") then
+                    v979.TextLabel.TextColor3 = v64.Text
+                end
+            else
+                local v980 = {
+                    BackgroundColor3 = v64.PanelLight,
+                    BackgroundTransparency = 0.15,
+                }
+                v37(v979, TweenInfo.new(0.15), v980)
+                if v979:FindFirstChild("TextLabel") then
+                    v979.TextLabel.TextColor3 = v64.SubText
+                end
+            end
+        end
+    end
+
+    for v987, v988 in ipairs({
+        {Name = "Info", Order = 1},
+        {Name = "FARM", Order = 2},
+        {Name = "Fish Manger", Order = 3},
+        {Name = "Save Fish", Order = 4},
+        {Name = "Statistics", Order = 5},
+        {Name = "Webhook Discord", Order = 6},
+        {Name = "تنقيص الحجم", Order = 8},
+        {Name = "Config", Order = 9},
+    }) do
+        local v989 = v35("TextButton", {
+            Name = v988.Name .. "Button",
+            Size = UDim2.new(1, 0, 0, 32),
+            BackgroundColor3 = v64.PanelLight,
+            BackgroundTransparency = 0.15,
+            AutoButtonColor = false,
+            Text = "",
+            LayoutOrder = v988.Order,
+            ZIndex = 3,
+            Parent = v166,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(0, 8), Parent = v989})
+        v35("UIStroke", {Color = v64.Stroke, Thickness = 1, Parent = v989})
+        v35("TextLabel", {
+            Name = "TextLabel",
+            Size = UDim2.new(1, -16, 1, 0),
+            Position = UDim2.fromOffset(10, 0),
+            BackgroundTransparency = 1,
+            Font = v67,
+            Text = v988.Name,
+            TextColor3 = v64.SubText,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextSize = 13,
+            ZIndex = 4,
+            Parent = v989,
+        })
+        v965[v988.Name] = v989
+        local v990 = v35("ScrollingFrame", {
+            Name = v988.Name .. "Page",
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0,
+            ScrollBarThickness = 3,
+            ScrollBarImageColor3 = v64.AccentDim,
+            CanvasSize = UDim2.fromScale(0, 0),
+            AutomaticCanvasSize = Enum.AutomaticSize.Y,
+            Visible = false,
+            ZIndex = 2,
+            Parent = v167,
+        })
+        v35("UIPadding", {
+            PaddingTop = UDim.new(0, 14),
+            PaddingLeft = UDim.new(0, 14),
+            PaddingRight = UDim.new(0, 14),
+            PaddingBottom = UDim.new(0, 20),
+            Parent = v990,
+        })
+        v966[v988.Name] = v990
+        v989.MouseButton1Click:Connect(function()
+            v982(v988.Name)
+        end)
+    end;
+
+    (function()
+        local v991 = v966.Info
+        v69(v35("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 32),
+            BackgroundTransparency = 1,
+            Font = v65,
+            Text = "RXZ BLOCK SPIN",
+            TextColor3 = v64.Text,
+            TextSize = 22,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = v991,
+        }), 0.3)
+        v35("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 22),
+            Position = UDim2.fromOffset(0, 38),
+            BackgroundTransparency = 1,
+            Font = v66,
+            Text = "Version 1.0  •  by z3k",
+            TextColor3 = v64.Accent,
+            TextSize = 14,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = v991,
+        })
+        local v993 = v35("Frame", {
+            Size = UDim2.new(1, 0, 0, 118),
+            Position = UDim2.fromOffset(0, 76),
+            BackgroundColor3 = v64.Panel,
+            BorderSizePixel = 0,
+            Parent = v991,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(0, 10), Parent = v993})
+        v35("UIStroke", {Color = v64.Stroke, Thickness = 1, Parent = v993})
+        v35("TextLabel", {
+            Size = UDim2.new(1, -24, 1, -20),
+            Position = UDim2.fromOffset(12, 10),
+            BackgroundTransparency = 1,
+            Font = v67,
+            Text = "سكربت متكامل لإدارة الصيد والأتمتة، حفظ الأسماك، متابعة الإحصائيات، إعداد Webhook وحفظ إعداداتك بسهولة.",
+            TextColor3 = v64.SubText,
+            TextSize = 14,
+            TextWrapped = true,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextYAlignment = Enum.TextYAlignment.Top,
+            Parent = v993,
+        })
+        v35("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 20),
+            Position = UDim2.fromOffset(0, 214),
+            BackgroundTransparency = 1,
+            Font = v66,
+            Text = "Discord الرسمي",
+            TextColor3 = v64.Text,
+            TextSize = 14,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = v991,
+        })
+        local v996 = v35("TextButton", {
+            Size = UDim2.new(1, 0, 0, 44),
+            Position = UDim2.fromOffset(0, 242),
+            BackgroundColor3 = v64.AccentDim,
+            AutoButtonColor = false,
+            Font = v65,
+            Text = "discord.gg/rxz   •   نسخ الرابط",
+            TextColor3 = v64.Text,
+            TextSize = 14,
+            Parent = v991,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(0, 9), Parent = v996})
+        v35("UIStroke", {
+            Color = v64.Accent,
+            Thickness = 1,
+            Transparency = 0.25,
+            Parent = v996,
+        })
+        v996.MouseButton1Click:Connect(function()
+            if pcall(function()
+                if setclipboard then
+                    setclipboard("https://discord.gg/rxz")
+                elseif toclipboard then
+                    toclipboard("https://discord.gg/rxz")
+                else
+                    error("Clipboard is unavailable")
+                end
+            end) then
+                v996.Text = "تم النسخ ✓"
+                v63("تم نسخ رابط الديسكورد", "success")
+                task.delay(1.5, function()
+                    if v996.Parent then
+                        v996.Text = "discord.gg/rxz   •   نسخ الرابط"
+                    end
+                end)
+            else
+                v63("تعذر نسخ الرابط تلقائيًا", "error")
+            end
+        end)
+    end)();
+
+    (function()
+        local v1005 = v966.FARM
+        v69(v35("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 26),
+            BackgroundTransparency = 1,
+            Font = v66,
+            Text = "FARM",
+            TextColor3 = v64.Text,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextSize = 18,
+            Parent = v1005,
+        }), 0.4)
+        v35("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 22),
+            Position = UDim2.fromOffset(0, 28),
+            BackgroundTransparency = 1,
+            Font = v65,
+            Text = "اختار الوزنية",
+            TextColor3 = v64.Text,
+            TextSize = 18,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = v1005,
+        })
+        local v1007 = v35("Frame", {
+            Size = UDim2.new(1, 0, 0, 34),
+            Position = UDim2.fromOffset(0, 54),
+            BackgroundTransparency = 1,
+            Parent = v1005,
+        })
+        v35("UIListLayout", {
+            FillDirection = Enum.FillDirection.Horizontal,
+            Padding = UDim.new(0, 8),
+            Parent = v1007,
+        })
+        local v1008 = {}
+        local v1025 = function()
+            local v1010 = getEnabledSpotList()
+            local v1011 = #v1010 > 1
+            multiSpotEnabled = v1011
+            local v1012 = false
+            for v1017, v1018 in ipairs(v1010) do
+                if v1018 == currentSpotIndex then
+                    v1012 = true
+                    break
+                end
+            end
+            if not v1012 then
+                currentSpotIndex = v1010[1]
+            end
+            for v1023, v1024 in pairs(v1008) do
+                if enabledSpots[v1023] then
+                    v1024.BackgroundColor3 = Color3.fromRGB(20, 130, 70)
+                else
+                    v1024.BackgroundColor3 = Color3.fromRGB(70, 70, 90)
+                end
+                v1024.Text = "وزنية " .. v1023
+            end
+        end
+        for v1030 = 1, #CAST_POSITIONS do
+            local v1070 = v35("TextButton", {
+                Name = "SpotBtn" .. v1030,
+                Size = UDim2.new(1 / #CAST_POSITIONS, -6, 1, 0),
+                BackgroundColor3 = Color3.fromRGB(70, 70, 90),
+                AutoButtonColor = false,
+                Font = v65,
+                Text = "وزنية " .. v1030,
+                TextColor3 = v64.Text,
+                TextSize = 13,
+                Parent = v1007,
+            })
+            v35("UICorner", {CornerRadius = UDim.new(0, 8), Parent = v1070})
+            v35("UIStroke", {Color = v64.Stroke, Thickness = 1, Parent = v1070})
+            v1008[v1030] = v1070
+            v1070.MouseButton1Click:Connect(function()
+                local v1071 = getEnabledSpotList()
+                if enabledSpots[v1030] and #v1071 <= 1 then
+                    v63("لازم وزنية واحدة على الأقل", "error")
+                    return
+                end
+                local v1072 = enabledSpots
+                local v1073
+                if enabledSpots[v1030] then
+                    v1073 = false
+                else
+                    v1073 = true
+                end
+                v1072[v1030] = v1073
+                currentSpotCatches = 0
+                v1025()
+                if enabledSpots[v1030] then
+                    currentSpotIndex = v1030
+                    v63("وزنية رقم " .. v1030, "success")
+                else
+                    v63("وزنية رقم " .. v1030 .. " OFF", "error")
+                end
+            end)
+        end
+        v1025()
+        v818 = v1008[1]
+        local v1031 = v35("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 22),
+            Position = UDim2.fromOffset(0, 96),
+            BackgroundTransparency = 1,
+            Font = v65,
+            Text = "التبديل بين الوزنيات بعد كل: 1 صيدة",
+            TextColor3 = v64.Text,
+            TextSize = 16,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = v1005,
+        })
+        local v1032 = v35("Frame", {
+            Name = "SliderTrack",
+            Size = UDim2.new(1, 0, 0, 10),
+            Position = UDim2.fromOffset(0, 122),
+            BackgroundColor3 = v64.PanelLight,
+            BorderSizePixel = 0,
+            Active = true,
+            Parent = v1005,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(1, 0), Parent = v1032})
+        local v1033 = v35("Frame", {
+            Name = "SliderFill",
+            Size = UDim2.new(0, 0, 1, 0),
+            BackgroundColor3 = v64.Accent,
+            BorderSizePixel = 0,
+            Parent = v1032,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(1, 0), Parent = v1033})
+        local v1034 = v35("Frame", {
+            Name = "SliderKnob",
+            Size = UDim2.fromOffset(18, 18),
+            Position = UDim2.new(0, -4, 0.5, 0),
+            AnchorPoint = Vector2.new(0, 0.5),
+            BackgroundColor3 = v64.Text,
+            BorderSizePixel = 0,
+            ZIndex = 5,
+            Active = true,
+            Parent = v1032,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(1, 0), Parent = v1034})
+        v35("UIStroke", {Color = v64.Accent, Thickness = 2, Parent = v1034})
+        local v1035 = false
+        local v1038 = function(a60)
+            local v1036 = math.clamp(math.floor(a60 + 0.5), 1, 10)
+            catchesPerSpot = v1036
+            local v1037 = (v1036 - 1) / 9
+            v1033.Size = UDim2.new(v1037, 0, 1, 0)
+            v1034.Position = UDim2.new(v1037, -9, 0.5, 0)
+            v1031.Text = "التبديل بين الوزنيات بعد كل: " .. v1036 .. " صيدة"
+        end
+        v832 = v1038
+        v1038(1)
+        local v1043 = function(a61)
+            local v1041 = v1032.AbsolutePosition.X
+            local v1042 = v1032.AbsoluteSize.X
+            if v1042 <= 0 then
+                return catchesPerSpot
+            end
+            return 1 + math.clamp((a61 - v1041) / v1042, 0, 1) * 9
+        end
+        v1032.InputBegan:Connect(function(a62)
+            if a62.UserInputType == Enum.UserInputType.MouseButton1 or a62.UserInputType == Enum.UserInputType.Touch then
+                v1035 = true
+                v125 = true
+                v1038(v1043(a62.Position.X))
+            end
+        end)
+        v1034.InputBegan:Connect(function(a63)
+            if a63.UserInputType == Enum.UserInputType.MouseButton1 or a63.UserInputType == Enum.UserInputType.Touch then
+                v1035 = true
+                v125 = true
+            end
+        end)
+        v18.InputChanged:Connect(function(a64)
+            if v1035 and (a64.UserInputType == Enum.UserInputType.MouseMovement or a64.UserInputType == Enum.UserInputType.Touch) then
+                v1038(v1043(a64.Position.X))
+            end
+        end)
+        v18.InputEnded:Connect(function(a65)
+            if a65.UserInputType == Enum.UserInputType.MouseButton1 or a65.UserInputType == Enum.UserInputType.Touch then
+                v1035 = false
+                v125 = false
+            end
+        end)
+        local v1052 = v35("TextButton", {
+            Name = "AutoFarmBtn",
+            Size = UDim2.new(1, 0, 0, 48),
+            Position = UDim2.fromOffset(0, 145),
+            BackgroundColor3 = Color3.fromRGB(210, 105, 0),
+            AutoButtonColor = false,
+            Font = v65,
+            Text = "Auto Farm  [ OFF ]",
+            TextColor3 = v64.Text,
+            TextSize = 16,
+            Parent = v1005,
+        })
+        v819 = v1052
+        v35("UICorner", {CornerRadius = UDim.new(0, 10), Parent = v1052})
+        v35("UIStroke", {Color = v64.Stroke, Thickness = 1, Parent = v1052})
+        v1052.MouseButton1Click:Connect(function()
+            v948()
+            if v534 then
+                v1052.Text = "Auto Farm  [ ON ]"
+                v1052.BackgroundColor3 = v64.GreenDim
+                v37(v1052, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(20, 140, 70)})
+            else
+                v1052.Text = "Auto Farm  [ OFF ]"
+                v1052.BackgroundColor3 = Color3.fromRGB(210, 105, 0)
+            end
+        end)
+        local v1054 = v35("TextButton", {
+            Name = "AutoSkipSliderBtn",
+            Size = UDim2.new(1, 0, 0, 42),
+            Position = UDim2.fromOffset(0, 200),
+            BackgroundColor3 = Color3.fromRGB(80, 60, 120),
+            AutoButtonColor = false,
+            Font = v65,
+            Text = "تسكيب السلايدر تلقائي  [ OFF ]",
+            TextColor3 = v64.Text,
+            TextSize = 14,
+            Parent = v1005,
+        })
+        v820 = v1054
+        v35("UICorner", {CornerRadius = UDim.new(0, 10), Parent = v1054})
+        v35("UIStroke", {Color = v64.Stroke, Thickness = 1, Parent = v1054})
+        v1054.MouseButton1Click:Connect(function()
+            local v1058
+            if v815 then
+                v1058 = false
+            else
+                v1058 = true
+            end
+            v815 = v1058
+            if v815 then
+                v1054.Text = "تسكيب السلايدر تلقائي  [ ON ]"
+                v1054.BackgroundColor3 = Color3.fromRGB(20, 130, 70)
+                v63("✅ تسكيب السلايدر تلقائي ON", "success")
+                if v879 then
+                    v879()
+                end
+            else
+                v1054.Text = "تسكيب السلايدر تلقائي  [ OFF ]"
+                v1054.BackgroundColor3 = Color3.fromRGB(80, 60, 120)
+                v63("تسكيب السلايدر تلقائي OFF", "error")
+            end
+        end)
+        v35("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 20),
+            Position = UDim2.fromOffset(0, 255),
+            BackgroundTransparency = 1,
+            Font = v66,
+            Text = "Keybind (Skip Slider)",
+            TextColor3 = v64.SubText,
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = v1005,
+        })
+        local v1059 = v35("TextLabel", {
+            Size = UDim2.new(0.45, 0, 0, 42),
+            Position = UDim2.fromOffset(0, 280),
+            BackgroundColor3 = v64.PanelLight,
+            Font = v65,
+            Text = "Q",
+            TextColor3 = v64.Text,
+            TextSize = 22,
+            Parent = v1005,
+        })
+        v821 = v1059
+        v35("UICorner", {CornerRadius = UDim.new(0, 10), Parent = v1059})
+        v35("UIStroke", {
+            Color = v64.Accent,
+            Thickness = 1,
+            Transparency = 0.4,
+            Parent = v1059,
+        })
+        local v1060 = v35("TextButton", {
+            Size = UDim2.new(0.5, -8, 0, 42),
+            Position = UDim2.new(0.5, 8, 0, 280),
+            BackgroundColor3 = v64.PanelLight,
+            AutoButtonColor = false,
+            Font = v66,
+            Text = "🔄 Change Key",
+            TextColor3 = v64.Text,
+            TextSize = 14,
+            Parent = v1005,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(0, 10), Parent = v1060})
+        v35("UIStroke", {Color = v64.Stroke, Thickness = 1, Parent = v1060})
+        v1060.MouseButton1Click:Connect(function()
+            if v812 then
+                return
+            end
+            v812 = true
+            v1060.Text = "⌨️ Press any key..."
+            v1059.Text = "?"
+            local v1064 = nil
+            v1064 = v18.InputBegan:Connect(function(a66)
+                if a66.UserInputType == Enum.UserInputType.Keyboard then
+                    v777 = a66.KeyCode
+                    v1059.Text = tostring(v777.Name)
+                    v1060.Text = "🔄 Change Key"
+                    v812 = false
+                    v1064:Disconnect()
+                    v63("Key set to: " .. v777.Name, "success")
+                end
+            end)
+        end)
+        v18.InputBegan:Connect(function(a67, a68)
+            if a68 then
+                return
+            end
+            if a67.KeyCode == v777 then
+                v880()
+            end
+        end)
+        v35("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 70),
+            Position = UDim2.fromOffset(0, 335),
+            BackgroundTransparency = 1,
+            Font = v67,
+            Text = "• التيك حقي : 3z.soon\n• \n• تسكيب سلايدر سوا كان صرافات او سمك\n• مثال: 2 = يصيد مرتين بكل وزنية ثم ينقل",
+            TextColor3 = v64.SubText,
+            TextSize = 12,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextYAlignment = Enum.TextYAlignment.Top,
+            Parent = v1005,
+        })
+    end)();
+
+    (function()
+        local v1099 = function()
+            local v1079 = false
+            pcall(function()
+                if v226 and v224 then
+                    v226.iterate_through_items(v224, function(a69)
+                        if v1079 then
+                            return
+                        end
+                        if a69 and a69.name and v535[a69.name] then
+                            v1079 = true
+                        end
+                    end)
+                end
+            end)
+            if v1079 then
+                return true
+            end
+            pcall(function()
+                local v1089 = v23:FindFirstChild("Items")
+                local v1090 = v1089 and v1089:FindFirstChild("ItemsHolder") and v1089.ItemsHolder:FindFirstChild("ItemsScrollingFrame")
+                if not v1090 then
+                    return
+                end
+                for v1095, v1096 in pairs(v1090:GetChildren()) do
+                    if v1096.Name ~= "Folder" and v1096.Name ~= "UIGridLayout" and v1096.Name ~= "ItemTemplate" then
+                        local v1097 = v1096:FindFirstChild("ItemName")
+                        local v1098 = v1097 and v1097.Text
+                        if v1098 and v535[v1098] then
+                            v1079 = true
+                            break
+                        end
+                    end
+                end
+            end)
+            return v1079
+        end
+        local v1107 = function()
+            if v548 then
+                return
+            end
+            if not v547 then
+                return
+            end
+            if not v1099() then
+                return
+            end
+            v548 = true
+            pcall(function()
+                v22:Kick("ازهللل السمك محفوظظ")
+            end)
+        end
+        local v1111 = function(a70)
+            if not v547 or not a70 then
+                return
+            end
+            local v1109 = a70.Health
+            local v1110 = a70.MaxHealth
+            if v1110 <= 0 then
+                return
+            end
+            if v1109 <= v1110 * 0.9 or v1109 <= 90 then
+                v1107()
+            end
+        end
+        local v1122 = function(a71)
+            if not a71 then
+                return
+            end
+            task.spawn(function()
+                local v1117 = a71:WaitForChild("Humanoid", 10)
+                if not v1117 then
+                    return
+                end
+                v1111(v1117)
+                v1117.HealthChanged:Connect(function()
+                    v1111(v1117)
+                end)
+            end)
+        end
+        if v22.Character then
+            v1122(v22.Character)
+        end
+        v22.CharacterAdded:Connect(v1122)
+        pcall(function()
+            local v1126 = require(v17.Modules.Core.Char)
+            if v1126 and v1126.hook then
+                v1126.hook(function(a72)
+                    v1122(a72)
+                end)
+            end
+        end);
+
+        (function()
+            local v1128 = v966["Save Fish"]
+            if not v1128 then
+                return
+            end
+            v69(v35("TextLabel", {
+                Size = UDim2.new(1, 0, 0, 26),
+                BackgroundTransparency = 1,
+                Font = v66,
+                Text = "Save Fish",
+                TextColor3 = v64.Text,
+                TextSize = 18,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = v1128,
+            }), 0.4)
+            v35("TextLabel", {
+                Size = UDim2.new(1, 0, 0, 36),
+                Position = UDim2.fromOffset(0, 28),
+                BackgroundTransparency = 1,
+                Font = v67,
+                Text = " Safe Mode.",
+                TextColor3 = v64.SubText,
+                TextSize = 12,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                TextYAlignment = Enum.TextYAlignment.Top,
+                TextWrapped = true,
+                Parent = v1128,
+            })
+            local v1130 = v35("ScrollingFrame", {
+                Size = UDim2.new(1, 0, 0, 220),
+                Position = UDim2.fromOffset(0, 70),
+                BackgroundColor3 = v64.Panel,
+                BorderSizePixel = 0,
+                ScrollBarThickness = 4,
+                ScrollBarImageColor3 = v64.AccentDim,
+                CanvasSize = UDim2.fromOffset(0, 0),
+                AutomaticCanvasSize = Enum.AutomaticSize.Y,
+                Parent = v1128,
+            })
+            v35("UICorner", {CornerRadius = UDim.new(0, 10), Parent = v1130})
+            v35("UIPadding", {
+                PaddingTop = UDim.new(0, 6),
+                PaddingLeft = UDim.new(0, 6),
+                PaddingRight = UDim.new(0, 6),
+                Parent = v1130,
+            })
+            v35("UIListLayout", {Padding = UDim.new(0, 5), Parent = v1130})
+            local v1134 = function(a73, a74)
+                if v535[a74] then
+                    a73.BackgroundColor3 = v64.GreenDim
+                    a73.Text = "  ✅  " .. a74 .. "  [محفوظ]"
+                    a73.TextColor3 = v64.Green
+                else
+                    a73.BackgroundColor3 = v64.PanelLight
+                    a73.Text = "  ⬜  " .. a74
+                    a73.TextColor3 = v64.SubText
+                end
+            end
+            for v1141, v1142 in ipairs(v518()) do
+                local v1143 = v35("TextButton", {
+                    Size = UDim2.new(1, -4, 0, 32),
+                    BackgroundColor3 = v64.PanelLight,
+                    AutoButtonColor = false,
+                    Font = v67,
+                    Text = "",
+                    TextSize = 14,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    Parent = v1130,
+                })
+                v35("UICorner", {CornerRadius = UDim.new(0, 7), Parent = v1143})
+                v1134(v1143, v1142)
+                v549[v1142] = v1143
+                v1143.MouseButton1Click:Connect(function()
+                    local v1144
+                    if v535[v1142] then
+                        v1144 = false
+                    else
+                        v1144 = true
+                    end
+                    v535[v1142] = v1144
+                    v1134(v1143, v1142)
+                end)
+            end
+            local v1145 = v35("TextButton", {
+                Size = UDim2.new(0.48, 0, 0, 28),
+                Position = UDim2.fromOffset(0, 300),
+                BackgroundColor3 = v64.Blue,
+                AutoButtonColor = false,
+                Font = v66,
+                Text = "تحديد الكل",
+                TextColor3 = v64.Text,
+                TextSize = 12,
+                Parent = v1128,
+            })
+            v35("UICorner", {CornerRadius = UDim.new(0, 8), Parent = v1145})
+            local v1146 = v35("TextButton", {
+                Size = UDim2.new(0.48, 0, 0, 28),
+                Position = UDim2.new(0.52, 0, 0, 300),
+                BackgroundColor3 = Color3.fromRGB(160, 40, 40),
+                AutoButtonColor = false,
+                Font = v66,
+                Text = "إلغاء الكل",
+                TextColor3 = v64.Text,
+                TextSize = 12,
+                Parent = v1128,
+            })
+            v35("UICorner", {CornerRadius = UDim.new(0, 8), Parent = v1146})
+            v1145.MouseButton1Click:Connect(function()
+                for v1154 in pairs(v535) do
+                    v535[v1154] = true
+                end
+                for v1159, v1160 in pairs(v549) do
+                    if v1160 and v1160.Parent then
+                        v1134(v1160, v1159)
+                    end
+                end
+            end)
+            v1146.MouseButton1Click:Connect(function()
+                for v1165 in pairs(v535) do
+                    v535[v1165] = false
+                end
+                for v1170, v1171 in pairs(v549) do
+                    if v1171 and v1171.Parent then
+                        v1134(v1171, v1170)
+                    end
+                end
+            end)
+            local v1172 = v35("TextButton", {
+                Size = UDim2.new(1, 0, 0, 42),
+                Position = UDim2.fromOffset(0, 340),
+                BackgroundColor3 = Color3.fromRGB(80, 80, 100),
+                AutoButtonColor = false,
+                Font = v65,
+                Text = "Activate Safe Mode  [ OFF ]",
+                TextColor3 = v64.Text,
+                TextSize = 15,
+                Parent = v1128,
+            })
+            v550 = v1172
+            v35("UICorner", {CornerRadius = UDim.new(0, 10), Parent = v1172})
+            v35("UIStroke", {Color = v64.Stroke, Thickness = 1, Parent = v1172})
+            v1172.MouseButton1Click:Connect(function()
+                local v1173
+                if v547 then
+                    v1173 = false
+                else
+                    v1173 = true
+                end
+                v547 = v1173
+                if v547 then
+                    v1172.Text = "Activate Safe Mode  [ ON ]"
+                    v1172.BackgroundColor3 = Color3.fromRGB(20, 140, 70)
+                    v63("Safe Mode ON", "success")
+                    local v1174 = v22.Character
+                    local v1175 = v1174 and v1174:FindFirstChildOfClass("Humanoid")
+                    local v1176 = v1175
+                    if v1175 then
+                        v1111(v1176)
+                    end
+                else
+                    v1172.Text = "Activate Safe Mode  [ OFF ]"
+                    v1172.BackgroundColor3 = Color3.fromRGB(80, 80, 100)
+                    v63("Safe Mode OFF", "error")
+                end
+            end)
+        end)()
+
+        local v1177 = v966["Fish Manger"]
+        v69(v35("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 26),
+            BackgroundTransparency = 1,
+            Font = v66,
+            Text = "Fish Manager",
+            TextColor3 = v64.Text,
+            TextSize = 18,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = v1177,
+        }), 0.4)
+        local v1178 = v35("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 24),
+            Position = UDim2.fromOffset(0, 32),
+            BackgroundTransparency = 1,
+            Font = v65,
+            Text = "تسكيب السمك: OFF",
+            TextColor3 = v64.Red,
+            TextSize = 16,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = v1177,
+        })
+        v822 = v1178
+        local v1179 = v35("ScrollingFrame", {
+            Size = UDim2.new(1, 0, 0, 155),
+            Position = UDim2.fromOffset(0, 60),
+            BackgroundColor3 = v64.Panel,
+            BorderSizePixel = 0,
+            ScrollBarThickness = 4,
+            ScrollBarImageColor3 = v64.AccentDim,
+            CanvasSize = UDim2.fromOffset(0, 0),
+            AutomaticCanvasSize = Enum.AutomaticSize.Y,
+            Parent = v1177,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(0, 10), Parent = v1179})
+        v35("UIPadding", {
+            PaddingTop = UDim.new(0, 6),
+            PaddingLeft = UDim.new(0, 6),
+            PaddingRight = UDim.new(0, 6),
+            Parent = v1179,
+        })
+        v35("UIListLayout", {Padding = UDim.new(0, 5), Parent = v1179})
+        local v1182 = function(a75, a76)
+            if v519[a76] then
+                a75.BackgroundColor3 = Color3.fromRGB(140, 30, 30)
+                a75.Text = "  ⏭️  " .. a76 .. "  [يتخطى]"
+                a75.TextColor3 = v64.Text
+            else
+                a75.BackgroundColor3 = v64.PanelLight
+                a75.Text = "  ⬜  " .. a76 .. "  [يصيد]"
+                a75.TextColor3 = v64.SubText
+            end
+        end
+        local v1183 = v518()
+        for v1190, v1191 in ipairs(v1183) do
+            local v1192 = v35("TextButton", {
+                Size = UDim2.new(1, -4, 0, 32),
+                BackgroundColor3 = v64.PanelLight,
+                AutoButtonColor = false,
+                Font = v67,
+                Text = "",
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = v1179,
+            })
+            v35("UICorner", {CornerRadius = UDim.new(0, 7), Parent = v1192})
+            v1182(v1192, v1191)
+            v830[v1191] = v1192
+            v1192.MouseButton1Click:Connect(function()
+                local v1193
+                if v519[v1191] then
+                    v1193 = false
+                else
+                    v1193 = true
+                end
+                v519[v1191] = v1193
+                v1182(v1192, v1191)
+            end)
+        end
+        __rg_skipLock = false
+        local v1194 = v35("TextButton", {
+            Size = UDim2.new(1, 0, 0, 34),
+            Position = UDim2.fromOffset(0, 224),
+            BackgroundColor3 = Color3.fromRGB(0, 140, 60),
+            AutoButtonColor = false,
+            Font = v65,
+            Text = "تشغيل تسكيب السمك",
+            TextColor3 = v64.Text,
+            TextSize = 14,
+            Parent = v1177,
+        })
+        v823 = v1194
+        v35("UICorner", {CornerRadius = UDim.new(0, 9), Parent = v1194})
+        v1194.MouseButton1Click:Connect(function()
+            if __rg_skipLock then
+                return
+            end
+            __rg_skipLock = true
+            local v1198
+            if v531 then
+                v1198 = false
+            else
+                v1198 = true
+            end
+            v531 = v1198
+            v533 = false
+            if v531 then
+                v1194.Text = "إيقاف تسكيب السمك"
+                v1194.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+                v1178.Text = "تسكيب السمك: ON"
+                v1178.TextColor3 = v64.Green
+                v63("تسكيب السمك ON", "success")
+            else
+                v1194.Text = "تشغيل تسكيب السمك"
+                v1194.BackgroundColor3 = Color3.fromRGB(0, 140, 60)
+                v1178.Text = "تسكيب السمك: OFF"
+                v1178.TextColor3 = v64.Red
+                v63("تسكيب السمك OFF", "error")
+            end
+            task.delay(0.3, function()
+                __rg_skipLock = false
+            end)
+        end)
+        local v1201 = v35("TextButton", {
+            Size = UDim2.new(0.48, 0, 0, 28),
+            Position = UDim2.fromOffset(0, 266),
+            BackgroundColor3 = v64.Blue,
+            AutoButtonColor = false,
+            Font = v66,
+            Text = "تحديد الكل للتسكيب",
+            TextColor3 = v64.Text,
+            TextSize = 12,
+            Parent = v1177,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(0, 8), Parent = v1201})
+        local v1202 = v35("TextButton", {
+            Size = UDim2.new(0.48, 0, 0, 28),
+            Position = UDim2.new(0.52, 0, 0, 266),
+            BackgroundColor3 = Color3.fromRGB(160, 40, 40),
+            AutoButtonColor = false,
+            Font = v66,
+            Text = "إلغاء الكل",
+            TextColor3 = v64.Text,
+            TextSize = 12,
+            Parent = v1177,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(0, 8), Parent = v1202})
+        v1201.MouseButton1Click:Connect(function()
+            for v1207 in pairs(v519) do
+                v519[v1207] = true
+            end
+            for v1212, v1213 in pairs(v830) do
+                if v1213 and v1213.Parent then
+                    v1182(v1213, v1212)
+                end
+            end
+        end)
+        v1202.MouseButton1Click:Connect(function()
+            for v1219 in pairs(v519) do
+                v519[v1219] = false
+            end
+            for v1224, v1225 in pairs(v830) do
+                if v1225 and v1225.Parent then
+                    v1182(v1225, v1224)
+                end
+            end
+        end)
+        local v1226 = v35("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 16),
+            Position = UDim2.fromOffset(0, 304),
+            BackgroundTransparency = 1,
+            Font = v66,
+            Text = "وقت التسكيب: 0s",
+            TextColor3 = v64.Text,
+            TextSize = 17,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = v1177,
+        })
+        v825 = v1226
+        local v1227 = v35("Frame", {
+            Name = "SliderTrack",
+            Size = UDim2.new(1, 0, 0, 10),
+            Position = UDim2.fromOffset(0, 326),
+            BackgroundColor3 = v64.PanelLight,
+            BorderSizePixel = 0,
+            Active = true,
+            Parent = v1177,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(1, 0), Parent = v1227})
+        local v1228 = v35("Frame", {
+            Name = "SliderFill",
+            Size = UDim2.new(0, 0, 1, 0),
+            BackgroundColor3 = v64.Accent,
+            BorderSizePixel = 0,
+            Parent = v1227,
+        })
+        v826 = v1228
+        v35("UICorner", {CornerRadius = UDim.new(1, 0), Parent = v1228})
+        local v1229 = v35("Frame", {
+            Name = "SliderKnob",
+            Size = UDim2.fromOffset(18, 18),
+            Position = UDim2.new(0, -4, 0.5, 0),
+            AnchorPoint = Vector2.new(0, 0.5),
+            BackgroundColor3 = v64.Text,
+            BorderSizePixel = 0,
+            ZIndex = 5,
+            Active = true,
+            Parent = v1227,
+        })
+        v827 = v1229
+        v35("UICorner", {CornerRadius = UDim.new(1, 0), Parent = v1229})
+        v35("UIStroke", {Color = v64.Accent, Thickness = 2, Parent = v1229})
+        local v1230 = false
+        local v1233 = function(a77)
+            local v1232 = math.clamp((a77 - 0) / 15, 0, 1)
+            v1228.Size = UDim2.new(v1232, 0, 1, 0)
+            v1229.Position = UDim2.new(v1232, -9, 0.5, 0)
+            v1226.Text = string.format("وقت التسكيب: %ds", math.floor(a77 + 0.5))
+            v532 = math.floor(a77 + 0.5)
+        end
+        v1233(0)
+        local v1237 = function(a78)
+            return 0 + math.clamp((a78 - v1227.AbsolutePosition.X) / v1227.AbsoluteSize.X, 0, 1) * 15
+        end
+        v1227.InputBegan:Connect(function(a79)
+            if a79.UserInputType == Enum.UserInputType.MouseButton1 or a79.UserInputType == Enum.UserInputType.Touch then
+                v1230 = true
+                v125 = true
+                v1233(v1237(a79.Position.X))
+            end
+        end)
+        v1229.InputBegan:Connect(function(a80)
+            if a80.UserInputType == Enum.UserInputType.MouseButton1 or a80.UserInputType == Enum.UserInputType.Touch then
+                v1230 = true
+                v125 = true
+            end
+        end)
+        v18.InputChanged:Connect(function(a81)
+            if v1230 and (a81.UserInputType == Enum.UserInputType.MouseMovement or a81.UserInputType == Enum.UserInputType.Touch) then
+                v1233(v1237(a81.Position.X))
+            end
+        end)
+        v18.InputEnded:Connect(function(a82)
+            if a82.UserInputType == Enum.UserInputType.MouseButton1 or a82.UserInputType == Enum.UserInputType.Touch then
+                v1230 = false
+                v125 = false
+            end
+        end)
+        local v1242 = v35("TextButton", {
+            Size = UDim2.new(1, 0, 0, 36),
+            Position = UDim2.fromOffset(0, 646),
+            BackgroundColor3 = Color3.fromRGB(180, 120, 20),
+            AutoButtonColor = false,
+            Font = v65,
+            Text = "💰 AutoSell  [ OFF ]",
+            TextColor3 = v64.Text,
+            TextSize = 14,
+            Parent = v1177,
+        })
+        v824 = v1242
+        v35("UICorner", {CornerRadius = UDim.new(0, 9), Parent = v1242})
+        v1242.MouseButton1Click:Connect(function()
+            local v1245
+            if v703 then
+                v1245 = false
+            else
+                v1245 = true
+            end
+            v703 = v1245
+            if v703 then
+                v1242.Text = "💰 AutoSell  [ ON ]"
+                v1242.BackgroundColor3 = Color3.fromRGB(20, 140, 70)
+                local carModel, seat = getPlayerCar()
+                if not carModel then
+                    v63("⚠️ اركب السيارة أولاً عشان يبدأ التوين!", "error")
+                else
+                    v63("💰 AutoSell ON — جاري التوجه للبيع!", "success")
+                    autoSellTrigger = true
+                end
+            else
+                v1242.Text = "💰 AutoSell  [ OFF ]"
+                v1242.BackgroundColor3 = Color3.fromRGB(180, 120, 20)
+                autoSellTrigger = false
+                v63("AutoSell OFF", "error")
+            end
+        end)
+        local v1246 = v35("TextButton", {
+            Name = "AutoBuyBaitBtn",
+            Size = UDim2.new(1, 0, 0, 36),
+            Position = UDim2.fromOffset(0, 690),
+            BackgroundColor3 = Color3.fromRGB(40, 90, 120),
+            AutoButtonColor = false,
+            Font = v65,
+            Text = "شراء طعم تلقائي  [ OFF ]",
+            TextColor3 = v64.Text,
+            TextSize = 14,
+            Parent = v1177,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(0, 9), Parent = v1246})
+        v1246.MouseButton1Click:Connect(function()
+            local v1247
+            if autoBuyBaitEnabled then
+                v1247 = false
+            else
+                v1247 = true
+            end
+            autoBuyBaitEnabled = v1247
+            if autoBuyBaitEnabled then
+                v1246.Text = "شراء طعم تلقائي  [ ON ]"
+                v1246.BackgroundColor3 = Color3.fromRGB(20, 130, 70)
+                v63("شراء طعم ON — اقرب من المحل", "success")
+            else
+                v1246.Text = "شراء طعم تلقائي  [ OFF ]"
+                v1246.BackgroundColor3 = Color3.fromRGB(40, 90, 120)
+                v63("شراء طعم OFF", "error")
+            end
+        end)
+    end)();
+
+    (function()
+        local v1248 = v966.Statistics
+        v69(v35("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 26),
+            BackgroundTransparency = 1,
+            Font = v66,
+            Text = "Statistics",
+            TextColor3 = v64.Text,
+            TextSize = 18,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = v1248,
+        }), 0.4)
+        local v1249 = v35("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 36),
+            Position = UDim2.fromOffset(0, 36),
+            BackgroundColor3 = v64.Panel,
+            Font = v65,
+            Text = "🐟 Total Fish: 0",
+            TextColor3 = v64.Gold,
+            TextSize = 16,
+            Parent = v1248,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(0, 9), Parent = v1249})
+        v35("UIStroke", {
+            Color = v64.Gold,
+            Thickness = 1,
+            Transparency = 0.5,
+            Parent = v1249,
+        })
+        local v1250 = v35("ScrollingFrame", {
+            Size = UDim2.new(1, 0, 0, 280),
+            Position = UDim2.fromOffset(0, 82),
+            BackgroundColor3 = v64.Panel,
+            BorderSizePixel = 0,
+            ScrollBarThickness = 4,
+            CanvasSize = UDim2.fromOffset(0, 0),
+            AutomaticCanvasSize = Enum.AutomaticSize.Y,
+            Parent = v1248,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(0, 10), Parent = v1250})
+        v35("UIPadding", {
+            PaddingTop = UDim.new(0, 6),
+            PaddingLeft = UDim.new(0, 6),
+            PaddingRight = UDim.new(0, 6),
+            Parent = v1250,
+        })
+        v35("UIListLayout", {Padding = UDim.new(0, 5), Parent = v1250})
+        local v1284 = function()
+            v1249.Text = "🐟 Total Fish: " .. v745.totalFish
+            for v1261, v1262 in v1250:GetChildren() do
+                if v1262:IsA("TextLabel") or v1262:IsA("TextButton") or v1262:IsA("Frame") then
+                    v1262:Destroy()
+                end
+            end
+            local v1263 = {}
+            for v1269, v1270 in pairs(v745.fishCaught) do
+                if v1270 > 0 then
+                    table.insert(v1263, {name = v1269, count = v1270})
+                end
+            end
+            table.sort(v1263, function(a83, a84)
+                local v1272 = a84.count < a83.count
+                return v1272
+            end)
+            if #v1263 == 0 then
+                v35("TextLabel", {
+                    Size = UDim2.new(1, -4, 0, 40),
+                    BackgroundTransparency = 1,
+                    Font = v67,
+                    Text = "No fish caught yet...",
+                    TextColor3 = v64.SubText,
+                    TextSize = 14,
+                    Parent = v1250,
+                })
+            else
+                for v1277, v1278 in ipairs(v1263) do
+                    local v1279 = v35("Frame", {
+                        Size = UDim2.new(1, -4, 0, 44),
+                        BackgroundColor3 = v64.PanelLight,
+                        BorderSizePixel = 0,
+                        Parent = v1250,
+                    })
+                    v35("UICorner", {CornerRadius = UDim.new(0, 8), Parent = v1279})
+                    local v1280 = v35("ImageLabel", {
+                        Size = UDim2.fromOffset(32, 32),
+                        Position = UDim2.fromOffset(6, 6),
+                        BackgroundColor3 = v64.Panel,
+                        BorderSizePixel = 0,
+                        ScaleType = Enum.ScaleType.Crop,
+                        Parent = v1279,
+                    })
+                    v35("UICorner", {CornerRadius = UDim.new(0, 6), Parent = v1280})
+                    local v1281 = v461[v1278.name]
+                    if v1281 then
+                        string.match(v1281, "%d+")
+                        local v1282 = v472(v1278.name)
+                        local v1283 = v1282 or v1281
+                        v1280.Image = v1283
+                    end
+                    v35("TextLabel", {
+                        Size = UDim2.new(1, -110, 1, 0),
+                        Position = UDim2.fromOffset(44, 0),
+                        BackgroundTransparency = 1,
+                        Font = v67,
+                        Text = v1278.name,
+                        TextColor3 = v64.Text,
+                        TextSize = 14,
+                        TextXAlignment = Enum.TextXAlignment.Left,
+                        Parent = v1279,
+                    })
+                    v35("TextLabel", {
+                        Size = UDim2.new(0, 58, 1, 0),
+                        Position = UDim2.new(1, -64, 0, 0),
+                        BackgroundTransparency = 1,
+                        Font = v65,
+                        Text = "× " .. v1278.count,
+                        TextColor3 = v64.Gold,
+                        TextSize = 14,
+                        TextXAlignment = Enum.TextXAlignment.Right,
+                        Parent = v1279,
+                    })
+                end
+            end
+        end
+        v747 = v1284
+        local v1285 = v35("TextButton", {
+            Size = UDim2.new(1, 0, 0, 38),
+            Position = UDim2.fromOffset(0, 375),
+            BackgroundColor3 = v64.Blue,
+            AutoButtonColor = false,
+            Font = v66,
+            Text = "🔄 تحديث الإحصائيات",
+            TextColor3 = v64.Text,
+            TextSize = 14,
+            Parent = v1248,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(0, 9), Parent = v1285})
+        v1285.MouseButton1Click:Connect(function()
+            v1284()
+            v63("✅ Stats refreshed", "success")
+        end)
+        v1284()
+    end)();
+
+    (function()
+        local v1286 = v966["Webhook Discord"]
+        v69(v35("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 26),
+            BackgroundTransparency = 1,
+            Font = v66,
+            Text = "Webhook Discord",
+            TextColor3 = v64.Text,
+            TextSize = 18,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = v1286,
+        }), 0.4)
+        v35("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 18),
+            Position = UDim2.fromOffset(0, 32),
+            BackgroundTransparency = 1,
+            Font = v66,
+            Text = "اختر الأسماك للإشعار:",
+            TextColor3 = v64.SubText,
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = v1286,
+        })
+        local v1287 = v35("ScrollingFrame", {
+            Size = UDim2.new(1, 0, 0, 150),
+            Position = UDim2.fromOffset(0, 54),
+            BackgroundColor3 = v64.Panel,
+            BorderSizePixel = 0,
+            ScrollBarThickness = 4,
+            CanvasSize = UDim2.fromOffset(0, 0),
+            AutomaticCanvasSize = Enum.AutomaticSize.Y,
+            Parent = v1286,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(0, 9), Parent = v1287})
+        v35("UIPadding", {
+            PaddingTop = UDim.new(0, 5),
+            PaddingLeft = UDim.new(0, 5),
+            PaddingRight = UDim.new(0, 5),
+            Parent = v1287,
+        })
+        v35("UIListLayout", {Padding = UDim.new(0, 4), Parent = v1287})
+        local v1296 = function(a85, a86)
+            if v949[a86] then
+                a85.BackgroundColor3 = v64.GreenDim
+                a85.Text = "  ✅  " .. a86
+                a85.TextColor3 = v64.Green
+            else
+                a85.BackgroundColor3 = v64.PanelLight
+                a85.Text = "  ⬜  " .. a86
+                a85.TextColor3 = v64.SubText
+            end
+        end
+        local v1297 = v518()
+        for v1305, v1306 in ipairs(v1297) do
+            local v1307 = v35("TextButton", {
+                Size = UDim2.new(1, -4, 0, 28),
+                BackgroundColor3 = v64.PanelLight,
+                AutoButtonColor = false,
+                Font = v67,
+                Text = "",
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = v1287,
+            })
+            v35("UICorner", {CornerRadius = UDim.new(0, 6), Parent = v1307})
+            v1296(v1307, v1306)
+            v831[v1306] = v1307
+            v1307.MouseButton1Click:Connect(function()
+                local v1308
+                if v949[v1306] then
+                    v1308 = false
+                else
+                    v1308 = true
+                end
+                v949[v1306] = v1308
+                v1296(v1307, v1306)
+            end)
+        end
+        v35("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 18),
+            Position = UDim2.fromOffset(0, 216),
+            BackgroundTransparency = 1,
+            Font = v66,
+            Text = "Webhook URL:",
+            TextColor3 = v64.SubText,
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = v1286,
+        })
+        local v1309 = v35("TextBox", {
+            Size = UDim2.new(1, 0, 0, 36),
+            Position = UDim2.fromOffset(0, 238),
+            BackgroundColor3 = v64.Panel,
+            Font = v67,
+            Text = "",
+            PlaceholderText = "https://discord.com/api/webhooks/...",
+            PlaceholderColor3 = v64.SubText,
+            TextColor3 = v64.Text,
+            TextSize = 12,
+            ClearTextOnFocus = false,
+            Parent = v1286,
+        })
+        v828 = v1309
+        v35("UICorner", {CornerRadius = UDim.new(0, 8), Parent = v1309})
+        v35("UIPadding", {PaddingLeft = UDim.new(0, 8), Parent = v1309})
+        v35("UIStroke", {Color = v64.Stroke, Thickness = 1, Parent = v1309})
+        v1309:GetPropertyChangedSignal("Text"):Connect(function()
+            v955 = v1309.Text
+        end)
+        local v1310 = v35("TextButton", {
+            Size = UDim2.new(1, 0, 0, 36),
+            Position = UDim2.fromOffset(0, 284),
+            BackgroundColor3 = v64.Blue,
+            AutoButtonColor = false,
+            Font = v66,
+            Text = "🔗 تحقق من الاتصال",
+            TextColor3 = v64.Text,
+            TextSize = 13,
+            Parent = v1286,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(0, 8), Parent = v1310})
+        v1310.MouseButton1Click:Connect(function()
+            if v955 ~= "" and #v955 >= 20 then
+                v1310.Text = "⏳ جاري التحقق..."
+                task.spawn(function()
+                    if v964("✅ Connection test from RXZ BLOCK SPIN") then
+                        v63("✅ الاتصال ناجح", "success")
+                    else
+                        v63("❌ فشل الاتصال، تأكد من الرابط", "error")
+                    end
+                    v1310.Text = "🔗 تحقق من الاتصال"
+                end)
+                return
+            end
+            v63("❌ حط رابط الويب هوك أولاً", "error")
+        end)
+        local v1315 = v35("TextButton", {
+            Size = UDim2.new(1, 0, 0, 40),
+            Position = UDim2.fromOffset(0, 330),
+            BackgroundColor3 = Color3.fromRGB(80, 80, 100),
+            AutoButtonColor = false,
+            Font = v65,
+            Text = "🔔 إرسال تلقائي  [ OFF ]",
+            TextColor3 = v64.Text,
+            TextSize = 14,
+            Parent = v1286,
+        })
+        v829 = v1315
+        v35("UICorner", {CornerRadius = UDim.new(0, 9), Parent = v1315})
+        v1315.MouseButton1Click:Connect(function()
+            local v1317
+            if v956 then
+                v1317 = false
+            else
+                v1317 = true
+            end
+            v956 = v1317
+            if v956 then
+                v1315.Text = "🔔 إرسال تلقائي  [ ON ]"
+                v1315.BackgroundColor3 = Color3.fromRGB(20, 130, 70)
+                v63("Webhook Auto Notify ON", "success")
+            else
+                v1315.Text = "🔔 إرسال تلقائي  [ OFF ]"
+                v1315.BackgroundColor3 = Color3.fromRGB(80, 80, 100)
+                v63("Webhook Auto Notify OFF", "error")
+            end
+        end)
+        local v1318 = v35("TextButton", {
+            Size = UDim2.new(1, 0, 0, 36),
+            Position = UDim2.fromOffset(0, 380),
+            BackgroundColor3 = Color3.fromRGB(100, 60, 200),
+            AutoButtonColor = false,
+            Font = v66,
+            Text = "📤 إرسال إشعار يدوي (للأسماك المحددة)",
+            TextColor3 = v64.Text,
+            TextSize = 13,
+            Parent = v1286,
+        })
+        v35("UICorner", {CornerRadius = UDim.new(0, 8), Parent = v1286})
+        v1318.MouseButton1Click:Connect(function()
+            if v955 == "" then
+                v63("❌ حط رابط الويب هوك", "error")
+                return
+            end
+            local v1319 = {}
+            for v1324, v1325 in pairs(v949) do
+                if v1325 then
+                    table.insert(v1319, v1324)
+                end
+            end
+            if #v1319 == 0 then
+                v63("❌ حدد سمكة واحدة على الأقل", "error")
+                return
+            end
+            for v1330, v1331 in ipairs(v1319) do
+                v964("i got " .. string.lower(v1331))
+                task.wait(0.3)
+            end
+            v63("✅ تم إرسال الإشعارات", "success")
+        end)
+        v35("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 30),
+            Position = UDim2.fromOffset(0, 425),
+            BackgroundTransparency = 1,
+            Font = v67,
+            Text = "مثال الرسالة: i got tuna",
+            TextColor3 = v64.SubText,
+            TextSize = 12,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = v1286,
+        })
+    end)();
+
+    (function()
+        local v1333 = v966["Dev'Real"]
+        if v1333 then
+            local v1336 = v35("Frame", {
+                Name = "DevContainer",
+                Size = UDim2.new(1, 0, 0, 180),
+                Position = UDim2.new(0, 0, 0, 40),
+                BackgroundTransparency = 1,
+                ZIndex = 2,
+                Parent = v1333,
+            })
+            v35("UIListLayout", {
+                FillDirection = Enum.FillDirection.Horizontal,
+                HorizontalAlignment = Enum.HorizontalAlignment.Center,
+                VerticalAlignment = Enum.VerticalAlignment.Top,
+                Padding = UDim.new(0, 30),
+                Parent = v1336,
+            })
+        end
+    end)();
+
+    (function()
+        local v1338 = v966["تنقيص الحجم"]
+        if v1338 then
+            v69(v35("TextLabel", {
+                Size = UDim2.new(1, 0, 0, 26),
+                BackgroundTransparency = 1,
+                Font = v66,
+                Text = "تنقيص الحجم",
+                TextColor3 = v64.Text,
+                TextSize = 18,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = v1338,
+            }), 0.4)
+            v35("TextLabel", {
+                Size = UDim2.new(1, 0, 0, 42),
+                Position = UDim2.fromOffset(0, 32),
+                BackgroundTransparency = 1,
+                Font = v67,
+                Text = "حرّك السلايدر عشان تصغّر الواجهة تدريجيًا.\nكل العناصر (بما فيهم أزرار اليمين) بتصغر مع بعض وتفضل واضحة.",
+                TextColor3 = v64.SubText,
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                TextYAlignment = Enum.TextYAlignment.Top,
+                Parent = v1338,
+            })
+            local v1357 = v35("TextLabel", {
+                Size = UDim2.new(1, 0, 0, 22),
+                Position = UDim2.fromOffset(0, 85),
+                BackgroundTransparency = 1,
+                Font = v65,
+                Text = "الحجم الحالي: 100%",
+                TextColor3 = v64.Accent,
+                TextSize = 16,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = v1338,
+            })
+            local v1358 = v35("Frame", {
+                Name = "SliderTrack",
+                Size = UDim2.new(1, 0, 0, 12),
+                Position = UDim2.fromOffset(0, 120),
+                BackgroundColor3 = v64.PanelLight,
+                BorderSizePixel = 0,
+                Active = true,
+                Parent = v1338,
+            })
+            v35("UICorner", {CornerRadius = UDim.new(1, 0), Parent = v1358})
+            local v1359 = v35("Frame", {
+                Name = "SliderFill",
+                Size = UDim2.new(1, 0, 1, 0),
+                BackgroundColor3 = v64.Accent,
+                BorderSizePixel = 0,
+                Parent = v1358,
+            })
+            v35("UICorner", {CornerRadius = UDim.new(1, 0), Parent = v1359})
+            local v1360 = v35("Frame", {
+                Name = "SliderKnob",
+                Size = UDim2.fromOffset(20, 20),
+                Position = UDim2.new(1, -10, 0.5, 0),
+                AnchorPoint = Vector2.new(0, 0.5),
+                BackgroundColor3 = v64.Text,
+                Active = true,
+                BorderSizePixel = 0,
+                ZIndex = 5,
+                Parent = v1358,
+            })
+            v35("UICorner", {CornerRadius = UDim.new(0, 10), Parent = v1360})
+            v35("UIStroke", {Color = v64.Accent, Thickness = 2, Parent = v1360})
+            local v1361 = 1
+            local v1362 = false
+            local v1364 = function(a87)
+                v1361 = math.clamp(a87, 0.65, 1)
+                v107.Scale = v1361
+                v1357.Text = "الحجم الحالي: " .. math.floor(v1361 * 100 + 0.5) .. "%"
+                local v1363 = (v1361 - 0.65) / 0.35
+                v1359.Size = UDim2.new(v1363, 0, 1, 0)
+                v1360.Position = UDim2.new(v1363, -10, 0.5, 0)
+            end
+            v833 = v1364
+            v1364(1)
+            local v1367 = function(a88)
+                local v1365 = v1358.AbsolutePosition.X
+                local v1366 = v1358.AbsoluteSize.X
+                if v1366 <= 0 then
+                    return v1361
+                end
+                return 0.65 + math.clamp((a88 - v1365) / v1366, 0, 1) * 0.35
+            end
+            v1358.InputBegan:Connect(function(a89)
+                if a89.UserInputType == Enum.UserInputType.MouseButton1 or a89.UserInputType == Enum.UserInputType.Touch then
+                    v1362 = true
+                    v125 = true
+                    v1364(v1367(a89.Position.X))
+                end
+            end)
+            v1360.InputBegan:Connect(function(a90)
+                if a90.UserInputType == Enum.UserInputType.MouseButton1 or a90.UserInputType == Enum.UserInputType.Touch then
+                    v1362 = true
+                    v125 = true
+                end
+            end)
+            v18.InputChanged:Connect(function(a91)
+                if v1362 and (a91.UserInputType == Enum.UserInputType.MouseMovement or a91.UserInputType == Enum.UserInputType.Touch) then
+                    v1364(v1367(a91.Position.X))
+                end
+            end)
+            v18.InputEnded:Connect(function(a92)
+                if a92.UserInputType == Enum.UserInputType.MouseButton1 or a92.UserInputType == Enum.UserInputType.Touch then
+                    v1362 = false
+                    v125 = false
+                end
+            end)
+            local v1368 = v35("Frame", {
+                Size = UDim2.new(1, 0, 0, 40),
+                Position = UDim2.fromOffset(0, 155),
+                BackgroundTransparency = 1,
+                Parent = v1338,
+            })
+            v35("UIListLayout", {
+                FillDirection = Enum.FillDirection.Horizontal,
+                HorizontalAlignment = Enum.HorizontalAlignment.Center,
+                VerticalAlignment = Enum.VerticalAlignment.Center,
+                Padding = UDim.new(0, 12),
+                Parent = v1368,
+            })
+            local v1373 = function(a93, a94, a95)
+                local v1369 = v35
+                local v1370 = {Size = UDim2.fromOffset(90, 36)}
+                local v1371 = a94 or v64.PanelLight
+                v1370.BackgroundColor3 = v1371
+                v1370.AutoButtonColor = false
+                v1370.Font = v66
+                v1370.Text = a93
+                v1370.TextColor3 = v64.Text
+                v1370.TextSize = 14
+                v1370.Parent = v1368
+                local v1372 = v1369("TextButton", v1370)
+                v35("UICorner", {CornerRadius = UDim.new(0, 8), Parent = v1372})
+                v35("UIStroke", {Color = v64.Stroke, Thickness = 1, Parent = v1372})
+                v1372.MouseButton1Click:Connect(a95)
+                return v1372
+            end
+            v1373("− أصغر", v64.PanelLight, function()
+                v1364(v1361 - 0.05)
+                v63("الحجم: " .. math.floor(v1361 * 100 + 0.5) .. "%", "success")
+            end)
+            v1373("افتراضي", v64.Blue, function()
+                v1364(1)
+                v63("تم الرجوع للحجم الأصلي", "success")
+            end)
+            v1373("+ أكبر", v64.PanelLight, function()
+                v1364(v1361 + 0.05)
+                v63("الحجم: " .. math.floor(v1361 * 100 + 0.5) .. "%", "success")
+            end)
+            v35("TextLabel", {
+                Size = UDim2.new(1, 0, 0, 55),
+                Position = UDim2.fromOffset(0, 210),
+                BackgroundTransparency = 1,
+                Font = v67,
+                Text = "ملاحظة: أقل حجم 65% عشان كل النصوص والأزرار تفضل واضحة ومقروءة.\nأزرار الـ (—) و (×) على اليمين هتصغر تلقائيًا مع الواجهة.",
+                TextColor3 = v64.SubText,
+                TextSize = 12,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                TextYAlignment = Enum.TextYAlignment.Top,
+                Parent = v1338,
+            })
+        end
+    end)();
+
+    (function()
+        local v1376 = v966.Config
+        if v1376 then
+            v69(v35("TextLabel", {
+                Size = UDim2.new(1, 0, 0, 26),
+                BackgroundTransparency = 1,
+                Font = v66,
+                Text = "Config - حفظ الإعدادات",
+                TextColor3 = v64.Text,
+                TextSize = 18,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = v1376,
+            }), 0.4)
+            v35("TextLabel", {
+                Size = UDim2.new(1, 0, 0, 18),
+                Position = UDim2.fromOffset(0, 34),
+                BackgroundTransparency = 1,
+                Font = v66,
+                Text = "اسم الكونفيغ:",
+                TextColor3 = v64.SubText,
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = v1376,
+            })
+            local v1381 = v35("TextBox", {
+                Size = UDim2.new(1, 0, 0, 36),
+                Position = UDim2.fromOffset(0, 54),
+                BackgroundColor3 = v64.Panel,
+                Font = v67,
+                Text = "",
+                PlaceholderText = "مثال: إعداداتي / Farm1 ...",
+                PlaceholderColor3 = v64.SubText,
+                TextColor3 = v64.Text,
+                TextSize = 14,
+                ClearTextOnFocus = false,
+                Parent = v1376,
+            })
+            v35("UICorner", {CornerRadius = UDim.new(0, 8), Parent = v1381})
+            v35("UIPadding", {PaddingLeft = UDim.new(0, 10), Parent = v1381})
+            v35("UIStroke", {Color = v64.Stroke, Thickness = 1, Parent = v1381})
+            local v1382 = v35("TextButton", {
+                Size = UDim2.new(1, 0, 0, 40),
+                Position = UDim2.fromOffset(0, 100),
+                BackgroundColor3 = Color3.fromRGB(20, 140, 70),
+                AutoButtonColor = false,
+                Font = v65,
+                Text = "💾 حفظ الإعدادات الحالية",
+                TextColor3 = v64.Text,
+                TextSize = 14,
+                Parent = v1376,
+            })
+            v35("UICorner", {CornerRadius = UDim.new(0, 9), Parent = v1382})
+            v35("TextLabel", {
+                Size = UDim2.new(1, 0, 0, 18),
+                Position = UDim2.fromOffset(0, 150),
+                BackgroundTransparency = 1,
+                Font = v66,
+                Text = "الكونفيجات المحفوظة:",
+                TextColor3 = v64.SubText,
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = v1376,
+            })
+            local v1383 = v35("ScrollingFrame", {
+                Size = UDim2.new(1, 0, 0, 220),
+                Position = UDim2.fromOffset(0, 172),
+                BackgroundColor3 = v64.Panel,
+                BorderSizePixel = 0,
+                ScrollBarThickness = 4,
+                ScrollBarImageColor3 = v64.AccentDim,
+                CanvasSize = UDim2.fromOffset(0, 0),
+                AutomaticCanvasSize = Enum.AutomaticSize.Y,
+                Parent = v1376,
+            })
+            v35("UICorner", {CornerRadius = UDim.new(0, 10), Parent = v1383})
+            v35("UIPadding", {
+                PaddingTop = UDim.new(0, 6),
+                PaddingLeft = UDim.new(0, 6),
+                PaddingRight = UDim.new(0, 6),
+                Parent = v1383,
+            })
+            v35("UIListLayout", {
+                Padding = UDim.new(0, 6),
+                SortOrder = Enum.SortOrder.Name,
+                Parent = v1383,
+            })
+            local v1416 = function()
+                local v1386 = {}
+                for v1393, v1394 in pairs(v519) do
+                    v1386[v1393] = v1394
+                end
+                local v1396 = {}
+                for v1401, v1402 in pairs(v949) do
+                    v1396[v1401] = v1402
+                end
+                local v1413 = {
+                    multiSpotEnabled = multiSpotEnabled,
+                    catchesPerSpot = catchesPerSpot,
+                    autoSkipSliderEnabled = v815,
+                    currentKey = v777.Name,
+                    fishList = v1386,
+                    skipFishSelected = v1386,
+                    skipBadFishEnabled = v531,
+                    skipDelay = v532,
+                    autoSellEnabled = v703,
+                    saveFishSelected = (function()
+                        local v1406 = {}
+                        for v1411, v1412 in pairs(v535) do
+                            v1406[v1411] = v1412
+                        end
+                        return v1406
+                    end)(),
+                    safeModeEnabled = v547,
+                    webhookFishSelected = v1396,
+                    webhookURL = v955,
+                    webhookAutoNotify = v956,
+                }
+                local v1414 = v107
+                local v1415 = v1414 and v107.Scale or 1
+                v1413.scale = v1415
+                v1413.autoFarmActive = v534
+                return v1413
+            end
+            local v1490 = function(a96)
+                if not a96 or type(a96) ~= "table" then
+                    return
+                end
+                multiSpotEnabled = true
+                local v1418 = a96.autoSkipSliderEnabled == true
+                v815 = v1418
+                if v820 then
+                    if v815 then
+                        v820.Text = "تسكيب السلايدر تلقائي  [ ON ]"
+                        local v1420 = Color3.fromRGB(20, 130, 70)
+                        v820.BackgroundColor3 = v1420
+                    else
+                        v820.Text = "تسكيب السلايدر تلقائي  [ OFF ]"
+                        local v1421 = Color3.fromRGB(80, 60, 120)
+                        v820.BackgroundColor3 = v1421
+                    end
+                end
+                if type(a96.currentKey) == "string" then
+                    local v1426, v1427 = pcall(function()
+                        return Enum.KeyCode[a96.currentKey]
+                    end)
+                    if v1426 and v1427 then
+                        v777 = v1427
+                        if v821 then
+                            v821.Text = a96.currentKey
+                        end
+                    end
+                end
+                local v1428 = a96.skipFishSelected
+                local v1429 = v1428 or a96.fishList
+                if type(v1429) == "table" then
+                    for v1434, v1435 in pairs(v1429) do
+                        if v519[v1434] ~= nil then
+                            local v1436 = v1435 == true
+                            v519[v1434] = v1436
+                        end
+                    end
+                    for v1441, v1442 in pairs(v830) do
+                        if v1442 and v1442.Parent then
+                            if v519[v1441] then
+                                v1442.BackgroundColor3 = Color3.fromRGB(140, 30, 30)
+                                v1442.Text = "  ⏭️  " .. v1441 .. "  [يتخطى]"
+                                v1442.TextColor3 = v64.Text
+                            else
+                                v1442.BackgroundColor3 = v64.PanelLight
+                                v1442.Text = "  ⬜  " .. v1441 .. "  [يصيد]"
+                                v1442.TextColor3 = v64.SubText
+                            end
+                        end
+                    end
+                end
+                local v1443 = a96.skipBadFishEnabled == true or a96.fishAutoDropEnabled == true
+                v531 = v1443
+                if v823 and v822 then
+                    if v531 then
+                        v823.Text = "إيقاف تسكيب السمك"
+                        local v1444 = Color3.fromRGB(180, 40, 40)
+                        v823.BackgroundColor3 = v1444
+                        v822.Text = "تسكيب السمك: ON"
+                        v822.TextColor3 = v64.Green
+                    else
+                        v823.Text = "تشغيل تسكيب السمك"
+                        local v1445 = Color3.fromRGB(0, 140, 60)
+                        v823.BackgroundColor3 = v1445
+                        v822.Text = "تسكيب السمك: OFF"
+                        v822.TextColor3 = v64.Red
+                    end
+                end
+                local v1446 = a96.skipDelay
+                local v1447 = v1446 or a96.dropDelay
+                if type(v1447) == "number" then
+                    v532 = math.clamp(math.floor(v1447 + 0.5), 0, 15)
+                    if v825 and v826 and v827 then
+                        local v1448 = v532 / 15
+                        local v1449 = UDim2.new(v1448, 0, 1, 0)
+                        v826.Size = v1449
+                        local v1450 = UDim2.new(v1448, -9, 0.5, 0)
+                        v827.Position = v1450
+                        local v1451 = string.format("وقت التسكيب: %ds", v532)
+                        v825.Text = v1451
+                    end
+                end
+                if type(a96.saveFishSelected) == "table" then
+                    for v1456, v1457 in pairs(a96.saveFishSelected) do
+                        if v535[v1456] ~= nil then
+                            local v1458 = v1457 == true
+                            v535[v1456] = v1458
+                        end
+                    end
+                    for v1463, v1464 in pairs(v549) do
+                        if v1464 and v1464.Parent then
+                            if v535[v1463] then
+                                v1464.BackgroundColor3 = v64.GreenDim
+                                v1464.Text = "  ✅  " .. v1463 .. "  [محفوظ]"
+                                v1464.TextColor3 = v64.Green
+                            else
+                                v1464.BackgroundColor3 = v64.PanelLight
+                                v1464.Text = "  ⬜  " .. v1463
+                                v1464.TextColor3 = v64.SubText
+                            end
+                        end
+                    end
+                end
+                local v1465 = a96.safeModeEnabled == true
+                v547 = v1465
+                if v550 then
+                    if v547 then
+                        v550.Text = "Activate Safe Mode  [ ON ]"
+                        local v1466 = Color3.fromRGB(20, 140, 70)
+                        v550.BackgroundColor3 = v1466
+                    else
+                        v550.Text = "Activate Safe Mode  [ OFF ]"
+                        local v1467 = Color3.fromRGB(80, 80, 100)
+                        v550.BackgroundColor3 = v1467
+                    end
+                end
+                local v1468 = a96.autoSellEnabled == true
+                v703 = v1468
+                if v824 then
+                    if v703 then
+                        v824.Text = "💰 AutoSell  [ ON ]"
+                        local v1469 = Color3.fromRGB(20, 140, 70)
+                        v824.BackgroundColor3 = v1469
+                    else
+                        v824.Text = "💰 AutoSell  [ OFF ]"
+                        local v1470 = Color3.fromRGB(180, 120, 20)
+                        v824.BackgroundColor3 = v1470
+                    end
+                end
+                if type(a96.webhookFishSelected) == "table" then
+                    for v1475, v1476 in pairs(a96.webhookFishSelected) do
+                        if v949[v1475] ~= nil then
+                            local v1477 = v1476 == true
+                            v949[v1475] = v1477
+                        end
+                    end
+                    for v1482, v1483 in pairs(v831) do
+                        if v1483 and v1483.Parent then
+                            if v949[v1482] then
+                                v1483.BackgroundColor3 = v64.GreenDim
+                                v1483.Text = "  ✅  " .. v1482
+                                v1483.TextColor3 = v64.Green
+                            else
+                                v1483.BackgroundColor3 = v64.PanelLight
+                                v1483.Text = "  ⬜  " .. v1482
+                                v1483.TextColor3 = v64.SubText
+                            end
+                        end
+                    end
+                end
+                if type(a96.webhookURL) == "string" then
+                    v955 = a96.webhookURL
+                    if v828 then
+                        v828.Text = v955
+                    end
+                end
+                local v1484 = a96.webhookAutoNotify == true
+                v956 = v1484
+                if v829 then
+                    if v956 then
+                        v829.Text = "🔔 إرسال تلقائي  [ ON ]"
+                        local v1485 = Color3.fromRGB(20, 130, 70)
+                        v829.BackgroundColor3 = v1485
+                    else
+                        v829.Text = "🔔 إرسال تلقائي  [ OFF ]"
+                        local v1486 = Color3.fromRGB(80, 80, 100)
+                        v829.BackgroundColor3 = v1486
+                    end
+                end
+                if type(a96.scale) == "number" and v833 then
+                    v833(a96.scale)
+                elseif type(a96.scale) == "number" and v107 then
+                    local v1487 = math.clamp(a96.scale, 0.65, 1)
+                    v107.Scale = v1487
+                end
+                if a96.autoFarmActive == true then
+                    if not v534 then
+                        v935()
+                    end
+                    if v819 then
+                        v819.Text = "Auto Farm  [ ON ]"
+                        local v1489 = Color3.fromRGB(20, 140, 70)
+                        v819.BackgroundColor3 = v1489
+                    end
+                else
+                    if v534 then
+                        v947()
+                    end
+                    if v819 then
+                        v819.Text = "Auto Farm  [ OFF ]"
+                        local v1488 = Color3.fromRGB(210, 105, 0)
+                        v819.BackgroundColor3 = v1488
+                    end
+                end
+            end
+            local v1502 = function()
+                if writefile then
+                    pcall(function()
+                        writefile("RXZBlockSpin_Configs.json", v20:JSONEncode(v817))
+                    end)
+                end
+            end
+            local v1503 = nil
+            v1503 = function()
+                for v1509, v1510 in ipairs(v1383:GetChildren()) do
+                    if v1510:IsA("Frame") then
+                        v1510:Destroy()
+                    end
+                end
+                local v1511 = {}
+                for v1516 in pairs(v817) do
+                    table.insert(v1511, v1516)
+                end
+                table.sort(v1511)
+                if #v1511 == 0 then
+                    v35("TextLabel", {
+                        Size = UDim2.new(1, -4, 0, 36),
+                        BackgroundTransparency = 1,
+                        Font = v67,
+                        Text = "ما في كونفيجات محفوظة بعد...",
+                        TextColor3 = v64.SubText,
+                        TextSize = 13,
+                        Parent = v1383,
+                    })
+                    return
+                end
+                for v1527, v1528 in ipairs(v1511) do
+                    local v1529 = v35("Frame", {
+                        Size = UDim2.new(1, -4, 0, 42),
+                        BackgroundColor3 = v64.PanelLight,
+                        BorderSizePixel = 0,
+                        Parent = v1383,
+                    })
+                    v35("UICorner", {CornerRadius = UDim.new(0, 8), Parent = v1529})
+                    v35("TextLabel", {
+                        Size = UDim2.new(1, -140, 1, 0),
+                        Position = UDim2.fromOffset(10, 0),
+                        BackgroundTransparency = 1,
+                        Font = v66,
+                        Text = v1528,
+                        TextColor3 = v64.Text,
+                        TextSize = 14,
+                        TextXAlignment = Enum.TextXAlignment.Left,
+                        Parent = v1529,
+                    })
+                    local v1530 = v35("TextButton", {
+                        Size = UDim2.fromOffset(55, 28),
+                        Position = UDim2.new(1, -120, 0.5, 0),
+                        AnchorPoint = Vector2.new(0, 0.5),
+                        BackgroundColor3 = v64.Blue,
+                        AutoButtonColor = false,
+                        Font = v66,
+                        Text = "Load",
+                        TextColor3 = v64.Text,
+                        TextSize = 12,
+                        Parent = v1529,
+                    })
+                    v35("UICorner", {CornerRadius = UDim.new(0, 6), Parent = v1530})
+                    local v1531 = v35("TextButton", {
+                        Size = UDim2.fromOffset(55, 28),
+                        Position = UDim2.new(1, -58, 0.5, 0),
+                        AnchorPoint = Vector2.new(0, 0.5),
+                        BackgroundColor3 = Color3.fromRGB(180, 40, 40),
+                        AutoButtonColor = false,
+                        Font = v66,
+                        Text = "Delete",
+                        TextColor3 = v64.Text,
+                        TextSize = 12,
+                        Parent = v1529,
+                    })
+                    v35("UICorner", {CornerRadius = UDim.new(0, 6), Parent = v1531})
+                    v1530.MouseButton1Click:Connect(function()
+                        local v1532 = v817[v1528]
+                        if v1532 then
+                            v1490(v1532)
+                            v63("✅ تم تحميل: " .. v1528, "success")
+                        end
+                    end)
+                    v1531.MouseButton1Click:Connect(function()
+                        v817[v1528] = nil
+                        v1502()
+                        v1503()
+                        v63("🗑️ تم حذف: " .. v1528, "error")
+                    end)
+                end
+            end;
+            (function()
+                v817 = {}
+                if isfile and readfile and isfile("RXZBlockSpin_Configs.json") then
+                    local v1496, v1497 = pcall(function()
+                        return v20:JSONDecode(readfile("RXZBlockSpin_Configs.json"))
+                    end)
+                    if v1496 and type(v1497) == "table" then
+                        v817 = v1497
+                    end
+                end
+            end)()
+            v1503()
+            v1382.MouseButton1Click:Connect(function()
+                local v1533 = v1381.Text
+                if v1533 and #v1533 >= 1 then
+                    local v1534 = v1533:gsub("^%s+", ""):gsub("%s+$", "")
+                    if #v1534 < 1 then
+                        v63("❌ اسم غير صالح", "error")
+                        return
+                    end
+                    local v1535 = v1416()
+                    v817[v1534] = v1535
+                    v1502()
+                    v1503()
+                    v1381.Text = ""
+                    v63("💾 تم الحفظ: " .. v1534, "success")
+                    return
+                end
+                v63("❌ اكتب اسم للكونفيغ أولاً", "error")
+            end)
+        end
+    end)()
+
+    v982("Info")
+    local v1536 = false
+    local v1537 = v75(false)
+    local v1538 = v35("ImageButton", {
+        Name = "RXZ_FloatingMinimize",
+        Size = UDim2.fromOffset(56, 56),
+        Position = UDim2.new(0.5, -28, 0.5, -28),
+        BackgroundColor3 = Color3.fromRGB(15, 15, 18),
+        BorderSizePixel = 0,
+        Visible = false,
+        ZIndex = 100,
+        Active = true,
+        Parent = v27,
+    })
+    v35("UICorner", {CornerRadius = UDim.new(1, 0), Parent = v1538})
+    v35("UIStroke", {
+        Color = Color3.fromRGB(255, 255, 255),
+        Thickness = 2,
+        Parent = v1538,
+    })
+    v35("TextLabel", {
+        Size = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 1,
+        Font = v65,
+        Text = "RXZ",
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 15,
+        ZIndex = 101,
+        Parent = v1538,
+    })
+    local v1539 = false
+    local v1540 = nil
+    local v1541 = nil
+    v1538.InputBegan:Connect(function(a97)
+        if a97.UserInputType == Enum.UserInputType.MouseButton1 or a97.UserInputType == Enum.UserInputType.Touch then
+            v1539 = true
+            v1540 = a97.Position
+            v1541 = v1538.Position
+        end
+    end)
+    v18.InputChanged:Connect(function(a98)
+        if v1539 and (a98.UserInputType == Enum.UserInputType.MouseMovement or a98.UserInputType == Enum.UserInputType.Touch) then
+            local v1542 = a98.Position - v1540
+            v1538.Position = UDim2.new(v1541.X.Scale, v1541.X.Offset + v1542.X, v1541.Y.Scale, v1541.Y.Offset + v1542.Y)
+        end
+    end)
+    v18.InputEnded:Connect(function(a99)
+        if a99.UserInputType == Enum.UserInputType.MouseButton1 or a99.UserInputType == Enum.UserInputType.Touch then
+            v1539 = false
+        end
+    end)
+    local v1546 = function(a100)
+        v1536 = a100
+        if v1536 then
+            v37(v106, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Size = UDim2.fromOffset(0, 0),
+                Position = UDim2.new(v1538.Position.X.Scale, v1538.Position.X.Offset, v1538.Position.Y.Scale, v1538.Position.Y.Offset),
+            })
+            task.delay(0.25, function()
+                v106.Visible = false
+                v1538.Visible = true
+            end)
+        else
+            v1538.Visible = false
+            v106.Visible = true
+            v37(v106, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = v1537})
+        end
+    end
+    v123.MouseButton1Click:Connect(function()
+        v1546(true)
+    end)
+    v1538.MouseButton1Click:Connect(function()
+        v1546(false)
+    end)
+    v124.MouseButton1Click:Connect(function()
+        v534 = false
+        v703 = false
+        autoBuyBaitEnabled = false
+        v238 = false
+        v815 = false
+        v531 = false
+        v547 = false
+        v956 = false
+        if v813 then
+            pcall(function()
+                task.cancel(v813)
+            end)
+            v813 = nil
+        end
+        v37(v106, TweenInfo.new(0.3), {Size = UDim2.fromOffset(v106.AbsoluteSize.X, 0)})
+        task.wait(0.3)
+        v27:Destroy()
+        getgenv().RXZBlockSpin_Loaded = false
+    end)
+    local v1559 = function(a101)
+        v25 = a101
+        v37(v91, TweenInfo.new(0.3), {Size = UDim2.fromOffset(300, 0)})
+        v37(v90, TweenInfo.new(0.35), {BackgroundTransparency = 1})
+        task.wait(0.35)
+        v90:Destroy()
+        local v1550 = a101 and 95 or 140
+        local v1551 = UDim2.new(0, v1550, 1, -42)
+        v156.Size = v1551
+        local v1552 = UDim2.new(1, -v1550, 0, 42)
+        v156.Position = v1552
+        local v1553 = UDim2.new(1, -v1550, 1, -42)
+        v167.Size = v1553
+        local v1554 = UDim2.new(0, 0, 0, 42)
+        v167.Position = v1554
+        if a101 then
+            local v1555 = UDim2.fromOffset(78, 18)
+            v158.Size = v1555
+            local v1556 = UDim2.fromOffset(8, 18)
+            v158.Position = v1556
+            v160.TextSize = 11
+        end
+        v106.Visible = true
+        local v1557 = UDim2.fromOffset(0, 0)
+        v106.Size = v1557
+        v1537 = v75(a101)
+        local v1558 = {Size = v1537}
+        v37(v106, TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out), v1558)
+    end
+    v104.MouseButton1Click:Connect(function()
+        v1559(false)
+    end)
+    v105.MouseButton1Click:Connect(function()
+        v1559(true)
+    end)
+
+    task.spawn(function()
+        v842()
+        v776()
+        if v168.loaded then
+            v168.loaded()
+        end
+    end)
