@@ -1,0 +1,878 @@
+--// MAXXECU MDASH v4 - AUTO ATTACH + FORCE TUNING + AR/EN //--
+
+local CoreGui    = game:GetService("CoreGui")
+local Players    = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS        = game:GetService("UserInputService")
+
+if CoreGui:FindFirstChild("MaxxECUDashUI") then
+    CoreGui.MaxxECUDashUI:Destroy()
+end
+
+local LP           = Players.LocalPlayer
+local CurrentCar   = nil
+local AttachLoop   = nil
+local LastSeatPart = nil
+local TuningActive = false  -- هل التعديل مفعل؟
+
+---------------------------------------------------------
+-- LANGUAGE SYSTEM
+---------------------------------------------------------
+local Lang = "AR"  -- AR أو EN
+
+local T = {
+    AR = {
+        noVehicle   = "لا توجد سياره",
+        ecu         = "ECU: ",
+        tabD1       = "شاشة 1",
+        tabD2       = "شاشة 2",
+        tabSet      = "الإعدادات",
+        langBtn     = "EN",
+        secEngine   = "المحرك",
+        secChassis  = "الهيكل",
+        secOverride = "تعديل مباشر",
+        labelMaxRPM     = "الريف ليميتر (RPM)",
+        labelBoost      = "البوست الهدف (BAR)",
+        labelLaunch     = "لانش كنترول (RPM)",
+        labelTorque     = "عزم المحرك",
+        labelMaxSpeed   = "السرعة القصوى (km/h)",
+        labelBrake      = "قوة الفرامل",
+        labelFuel       = "مستوى الوقود (%)",
+        labelAirTemp    = "حرارة الهواء (°C)",
+        labelEthanol    = "نسبة الإيثانول (%)",
+        forceTuning     = "⚡ تفعيل التعديل المستمر",
+        tuningOn        = "🔴 إيقاف التعديل",
+        forceAttach     = "🔌 اقتران يدوي",
+        noSeat          = "اجلس في سياره أولاً!",
+        tuningEnabled   = "تعديل مفعّل ✅",
+        tuningDisabled  = "تعديل موقف ❌",
+    },
+    EN = {
+        noVehicle   = "No Vehicle",
+        ecu         = "ECU: ",
+        tabD1       = "Display 1",
+        tabD2       = "Display 2",
+        tabSet      = "Settings",
+        langBtn     = "AR",
+        secEngine   = "ENGINE",
+        secChassis  = "CHASSIS",
+        secOverride = "LIVE OVERRIDE",
+        labelMaxRPM     = "Rev Limiter (RPM)",
+        labelBoost      = "Target Boost (BAR)",
+        labelLaunch     = "Launch Control (RPM)",
+        labelTorque     = "Engine Torque",
+        labelMaxSpeed   = "Max Speed (km/h)",
+        labelBrake      = "Brake Force",
+        labelFuel       = "Fuel Level (%)",
+        labelAirTemp    = "Air Temp (°C)",
+        labelEthanol    = "Ethanol (%)",
+        forceTuning     = "⚡ Enable Force Tuning",
+        tuningOn        = "🔴 Stop Tuning",
+        forceAttach     = "🔌 Manual Attach",
+        noSeat          = "Sit in a car first!",
+        tuningEnabled   = "Tuning Active ✅",
+        tuningDisabled  = "Tuning Off ❌",
+    }
+}
+
+local function TR(key)
+    return T[Lang][key] or key
+end
+
+---------------------------------------------------------
+-- GUI MAIN
+---------------------------------------------------------
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MaxxECUDashUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = CoreGui
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 900, 0, 540)
+MainFrame.Position = UDim2.new(0.5, -450, 0.5, -270)
+MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 14)
+MainFrame.BorderColor3 = Color3.fromRGB(200, 20, 20)
+MainFrame.BorderSizePixel = 2
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
+
+-- TOP BAR
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 50)
+TopBar.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+TopBar.BorderColor3 = Color3.fromRGB(180, 20, 20)
+TopBar.BorderSizePixel = 1
+TopBar.Parent = MainFrame
+
+local Logo = Instance.new("TextLabel")
+Logo.Size = UDim2.new(0, 150, 1, 0)
+Logo.Position = UDim2.new(0, 15, 0, 0)
+Logo.BackgroundTransparency = 1
+Logo.Text = "MaxxECU"
+Logo.TextColor3 = Color3.fromRGB(230, 30, 30)
+Logo.TextSize = 26
+Logo.Font = Enum.Font.SourceSansBold
+Logo.TextXAlignment = Enum.TextXAlignment.Left
+Logo.Parent = TopBar
+
+local ClockText = Instance.new("TextLabel")
+ClockText.Size = UDim2.new(0, 80, 1, 0)
+ClockText.Position = UDim2.new(1, -88, 0, 0)
+ClockText.BackgroundTransparency = 1
+ClockText.TextColor3 = Color3.fromRGB(255, 30, 30)
+ClockText.TextSize = 20
+ClockText.Font = Enum.Font.SourceSansItalic
+ClockText.Parent = TopBar
+
+-- Language Button
+local LangBtn = Instance.new("TextButton")
+LangBtn.Size = UDim2.new(0, 46, 0, 28)
+LangBtn.Position = UDim2.new(1, -142, 0.5, -14)
+LangBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+LangBtn.BorderColor3 = Color3.fromRGB(150, 150, 200)
+LangBtn.BorderSizePixel = 1
+LangBtn.Text = TR("langBtn")
+LangBtn.TextColor3 = Color3.fromRGB(200, 200, 255)
+LangBtn.Font = Enum.Font.SourceSansBold
+LangBtn.TextSize = 14
+LangBtn.Parent = TopBar
+Instance.new("UICorner", LangBtn).CornerRadius = UDim.new(0, 5)
+
+-- Status dot + label
+local StatusDot = Instance.new("Frame")
+StatusDot.Size = UDim2.new(0, 9, 0, 9)
+StatusDot.Position = UDim2.new(1, -380, 0.5, -4)
+StatusDot.BackgroundColor3 = Color3.fromRGB(255, 80, 30)
+StatusDot.BorderSizePixel = 0
+StatusDot.Parent = TopBar
+Instance.new("UICorner", StatusDot).CornerRadius = UDim.new(1, 0)
+
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(0, 220, 1, 0)
+StatusLabel.Position = UDim2.new(1, -368, 0, 0)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = TR("noVehicle")
+StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 30)
+StatusLabel.TextSize = 13
+StatusLabel.Font = Enum.Font.SourceSansBold
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+StatusLabel.Parent = TopBar
+
+---------------------------------------------------------
+-- DATA STATE
+---------------------------------------------------------
+local CurrentDisplay = "D1"
+local ValueLabels    = {}
+local SmoothedRPM    = 0
+local SmoothedSpeed  = 0
+
+local LiveData = {
+    rpm=0, speed=0, gear="N", boost=0,
+    throttle=0, brake=0, fuel=100,
+    oilTemp=85, oilPress=4.2, temp=90,
+    lrTire=100, lfTire=100, rrTire=100, rfTire=100,
+    lambda=1.00, afr=14.7, ignTiming=15, battery=13.8,
+    ethanol=0, airTemp=32, ecuTemp=40,
+}
+
+local TuningSettings = {
+    maxRPM       = 7800,
+    targetBoost  = 1.5,
+    launchRPM    = 4500,
+    maxSpeed     = 300,
+    engineTorque = 1000,
+    brakeForce   = 3000,
+}
+
+---------------------------------------------------------
+-- GAUGE DEFINITIONS
+---------------------------------------------------------
+local Display1Gauges = {
+    {T="RPM",      K="rpm",      F=function(v) return math.floor(v)                   end},
+    {T="BRAKE",    K="brake",    F=function(v) return math.floor(v*100).."%"           end},
+    {T="LR TIRE",  K="lrTire",  F=function(v) return math.floor(v).."%"               end},
+    {T="SPEED",    K="speed",    F=function(v) return math.floor(v).." km/h"           end},
+    {T="THROTTLE", K="throttle", F=function(v) return math.floor(v*100).."%"           end},
+    {T="LF TIRE",  K="lfTire",  F=function(v) return math.floor(v).."%"               end},
+    {T="BOOST",    K="boost",    F=function(v) return string.format("%.2f bar",v)      end},
+    {T="GEAR",     K="gear",     F=function(v) return tostring(v)                      end},
+    {T="RR TIRE",  K="rrTire",  F=function(v) return math.floor(v).."%"               end},
+    {T="FUEL",     K="fuel",     F=function(v) return math.floor(v).."%"               end},
+    {T="OIL TEMP", K="oilTemp",  F=function(v) return math.floor(v).."°C"             end},
+    {T="RF TIRE",  K="rfTire",  F=function(v) return math.floor(v).."%"               end},
+    {T="TEMP",     K="temp",     F=function(v) return math.floor(v).."°C"             end},
+    {T="OIL PRESS",K="oilPress", F=function(v) return string.format("%.1f bar",v)     end},
+    {T="BATTERY",  K="battery",  F=function(v) return string.format("%.1fV",v)        end},
+}
+
+local Display2Gauges = {
+    {T="LAMBDA",    K="lambda",   F=function(v) return string.format("%.2f",v)         end},
+    {T="AFR",       K="afr",      F=function(v) return string.format("%.1f",v)         end},
+    {T="IGN TIM",   K="ignTiming",F=function(v) return math.floor(v).."°"             end},
+    {T="WASTEGATE", K="boost",    F=function(v) return math.min(math.floor(v*66),100).."%"end},
+    {T="INJ DUTY",  K="throttle", F=function(v) return math.floor(v*100).."%"          end},
+    {T="ETHANOL",   K="ethanol",  F=function(v) return math.floor(v).."%"              end},
+    {T="MAP PRESS", K="boost",    F=function(v) return string.format("%.2f",1+v)       end},
+    {T="AIR TEMP",  K="airTemp",  F=function(v) return math.floor(v).."°C"            end},
+    {T="ECU TEMP",  K="ecuTemp",  F=function(v) return math.floor(v).."°C"            end},
+    {T="LAUNCH",    K="rpm",      F=function(v) return v>TuningSettings.launchRPM and "ON" or "OFF"end},
+    {T="ANTI-LAG",  K="boost",    F=function(v) return v>0.5 and "ON" or "OFF"         end},
+    {T="EGT 1",     K="temp",     F=function(v) return math.floor(v*5).."°C"          end},
+    {T="SHIFT",     K="rpm",      F=function(v) return v>TuningSettings.maxRPM*0.9 and "SHIFT!" or "OK"end},
+    {T="CAM POS",   K="rpm",      F=function(v) return math.floor(v/50)%360 .."°"     end},
+    {T="OIL PRESS", K="oilPress", F=function(v) return string.format("%.2f",v)         end},
+}
+
+local DisplayMap = {D1=Display1Gauges, D2=Display2Gauges}
+
+---------------------------------------------------------
+-- GRID FRAME
+---------------------------------------------------------
+local GridFrame = Instance.new("Frame")
+GridFrame.Size = UDim2.new(1, -20, 1, -70)
+GridFrame.Position = UDim2.new(0, 10, 0, 60)
+GridFrame.BackgroundTransparency = 1
+GridFrame.Parent = MainFrame
+
+local UIGrid = Instance.new("UIGridLayout")
+UIGrid.CellSize    = UDim2.new(0.318, 0, 0.178, 0)
+UIGrid.CellPadding = UDim2.new(0.015, 0, 0.018, 0)
+UIGrid.Parent      = GridFrame
+
+local function RefreshDisplay(key)
+    GridFrame.Visible = true
+    for _, c in ipairs(GridFrame:GetChildren()) do
+        if c:IsA("Frame") then c:Destroy() end
+    end
+    ValueLabels = {}
+    local list = DisplayMap[key]
+    if not list then return end
+    for i, data in ipairs(list) do
+        local Box = Instance.new("Frame")
+        Box.BackgroundColor3 = Color3.fromRGB(28,28,32)
+        Box.BorderColor3     = Color3.fromRGB(160,20,20)
+        Box.BorderSizePixel  = 1
+        Box.Parent           = GridFrame
+        Instance.new("UICorner", Box).CornerRadius = UDim.new(0,8)
+
+        local TL = Instance.new("TextLabel")
+        TL.Size=UDim2.new(1,-10,0,18); TL.Position=UDim2.new(0,10,0,4)
+        TL.BackgroundTransparency=1; TL.Text=data.T
+        TL.TextColor3=Color3.fromRGB(220,30,30)
+        TL.Font=Enum.Font.SourceSansBold; TL.TextSize=12
+        TL.TextXAlignment=Enum.TextXAlignment.Left; TL.Parent=Box
+
+        local VL = Instance.new("TextLabel")
+        VL.Size=UDim2.new(1,0,1,-20); VL.Position=UDim2.new(0,0,0,18)
+        VL.BackgroundTransparency=1; VL.Text="---"
+        VL.TextColor3=Color3.fromRGB(255,255,255)
+        VL.Font=Enum.Font.SourceSansItalic; VL.TextSize=26
+        VL.TextXAlignment=Enum.TextXAlignment.Center; VL.Parent=Box
+
+        ValueLabels[i] = {L=VL, K=data.K, F=data.F}
+    end
+end
+
+local function UpdateGauges()
+    for _, e in ipairs(ValueLabels) do
+        if e and e.L and e.L.Parent then
+            local val = LiveData[e.K]
+            if val ~= nil then
+                e.L.Text = tostring(e.F(val))
+                if e.K == "rpm" then
+                    local r = val / TuningSettings.maxRPM
+                    e.L.TextColor3 = r>.9 and Color3.fromRGB(255,50,50)
+                        or r>.75 and Color3.fromRGB(255,180,0)
+                        or Color3.fromRGB(255,255,255)
+                end
+            end
+        end
+    end
+end
+
+---------------------------------------------------------
+-- READ CAR DATA
+---------------------------------------------------------
+local function ReadCarData(seat, dt)
+    local rawSpeed = seat.AssemblyLinearVelocity.Magnitude * 3.6
+    SmoothedSpeed  = SmoothedSpeed + (rawSpeed - SmoothedSpeed) * math.min(dt*8, 1)
+    LiveData.speed = SmoothedSpeed
+
+    -- بعض سيارات A-Chassis تستخدم Seat عادي بدال VehicleSeat
+    local thr = 0
+    local brk = 0
+    if seat:IsA("VehicleSeat") then
+        pcall(function()
+            thr = seat.ThrottleFloat or 0
+            brk = seat.BrakeFloat or 0
+        end)
+    end
+    
+    if thr == 0 then
+        if UIS:IsKeyDown(Enum.KeyCode.W) or UIS:IsKeyDown(Enum.KeyCode.Up) then thr = 1 end
+        if UIS:IsKeyDown(Enum.KeyCode.S) or UIS:IsKeyDown(Enum.KeyCode.Down) then thr = -1 end
+    end
+    if brk == 0 then
+        if UIS:IsKeyDown(Enum.KeyCode.Space) then brk = 1 end
+    end
+    
+    thr = math.abs(thr)
+    brk = math.abs(brk)
+    LiveData.throttle = thr
+    LiveData.brake    = brk
+
+    local spd = SmoothedSpeed
+    
+    -- محاولة قراءة القير الحقيقي من A-Chassis
+    local carModel = seat:FindFirstAncestorWhichIsA("Model") or seat.Parent
+    local driveVals = carModel:FindFirstChild("Drive") and carModel.Drive:FindFirstChild("Values")
+    local gearVal = driveVals and driveVals:FindFirstChild("Gear")
+    
+    if gearVal and gearVal:IsA("ValueBase") then
+        LiveData.gear = tostring(gearVal.Value)
+    else
+        local gear = 1
+        if    spd > 170 then gear = 6
+        elseif spd > 130 then gear = 5
+        elseif spd > 95  then gear = 4
+        elseif spd > 60  then gear = 3
+        elseif spd > 30  then gear = 2 end
+        LiveData.gear = tostring(gear)
+    end
+
+    local targetRPM = math.min(spd*80/gear + thr*1500 + 600, TuningSettings.maxRPM)
+    SmoothedRPM  = SmoothedRPM + (targetRPM - SmoothedRPM) * math.min(dt*6, 1)
+    LiveData.rpm = SmoothedRPM
+
+    LiveData.boost = math.max(0, (thr - 0.35) * TuningSettings.targetBoost * 2.2)
+
+    if LiveData.rpm > 2000 then
+        LiveData.temp    = math.min(115, LiveData.temp    + dt*0.4)
+        LiveData.oilTemp = math.min(125, LiveData.oilTemp + dt*0.2)
+    else
+        LiveData.temp    = math.max(85,  LiveData.temp    - dt*0.15)
+        LiveData.oilTemp = math.max(85,  LiveData.oilTemp - dt*0.1)
+    end
+    LiveData.oilPress = math.max(2.5, 4.5 - (LiveData.temp-85)*0.012)
+    LiveData.fuel     = math.max(0, LiveData.fuel - thr*dt*0.04)
+end
+
+---------------------------------------------------------
+-- ✅ FORCE TUNING - يطبق التعديل كل frame (يتغلب على لعبة)
+---------------------------------------------------------
+local function EnsureForce(root)
+    local att = root:FindFirstChild("MaxxECU_Att")
+    if not att then
+        att = Instance.new("Attachment")
+        att.Name = "MaxxECU_Att"
+        att.Parent = root
+    end
+
+    local vf = root:FindFirstChild("MaxxECU_VF")
+    if not vf then
+        vf = Instance.new("VectorForce")
+        vf.Name = "MaxxECU_VF"
+        vf.Attachment0 = att
+        vf.RelativeTo = Enum.ActuatorRelativeTo.World
+        vf.Force = Vector3.new(0, 0, 0)
+        vf.Parent = root
+    end
+    return vf
+end
+
+local function IsGrounded(root)
+    local params = RaycastParams.new()
+    params.FilterDescendantsInstances = {root.Parent}
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    local result = workspace:Raycast(root.Position, root.CFrame.UpVector * -10, params)
+    return result ~= nil
+end
+
+local function ForceTuneFrame(seat, dt)
+    if not TuningActive then
+        pcall(function()
+            local root = seat and seat.AssemblyRootPart
+            local vf = root and root:FindFirstChild("MaxxECU_VF")
+            if vf then vf.Force = Vector3.new(0,0,0) end
+        end)
+        return
+    end
+    if not seat or not seat.Parent then return end
+
+    if seat:IsA("VehicleSeat") then
+        pcall(function()
+            seat.MaxSpeed       = TuningSettings.maxSpeed
+            seat.TorqueStrength = TuningSettings.engineTorque
+            seat.BrakeForce     = TuningSettings.brakeForce
+        end)
+    end
+
+    pcall(function()
+        local root = seat.AssemblyRootPart
+        if not root then return end
+
+        local thr = 0
+        local brk = 0
+        if seat:IsA("VehicleSeat") then
+            pcall(function()
+                thr = seat.ThrottleFloat or 0
+                brk = seat.BrakeFloat or 0
+            end)
+        end
+        
+        if thr == 0 then
+            if UIS:IsKeyDown(Enum.KeyCode.W) or UIS:IsKeyDown(Enum.KeyCode.Up) then thr = 1 end
+            if UIS:IsKeyDown(Enum.KeyCode.S) or UIS:IsKeyDown(Enum.KeyCode.Down) then thr = -1 end
+        end
+        if brk == 0 then
+            if UIS:IsKeyDown(Enum.KeyCode.Space) then brk = 1 end
+        end
+
+        local mass = root.AssemblyMass
+        local vf = EnsureForce(root)
+        
+        if (thr == 0 and brk == 0) or not IsGrounded(root) then
+            vf.Force = Vector3.new(0, 0, 0)
+            return
+        end
+
+        -- نحدد اتجاه وجه السيارة، ونجمد محور Y عشان نمنع الطيران 100%
+        local look = root.CFrame.LookVector
+        local flatLook = Vector3.new(look.X, 0, look.Z)
+        if flatLook.Magnitude > 0 then
+            flatLook = flatLook.Unit
+        else
+            flatLook = Vector3.new(0,0,1)
+        end
+
+        local currentVel = root.AssemblyLinearVelocity
+        local forwardSpeed = currentVel:Dot(flatLook)
+        local forceMag = 0 -- تم الإصلاح: تعريف المتغير عشان ما يكرش السكربت
+        
+        -- قراءة القير الحالي
+        local carModel = root.Parent
+        local driveVals = carModel:FindFirstChild("Drive") and carModel.Drive:FindFirstChild("Values")
+        local gearVal = driveVals and driveVals:FindFirstChild("Gear")
+        local currentGear = gearVal and tonumber(gearVal.Value) or tonumber(LiveData.gear) or 1
+        
+        -- نظام السرعة الذكي لكل قير (توزيع السرعة القصوى على النمر)
+        local gearTargetSpeed = 0
+        if currentGear > 0 then
+            -- القير 1 يعطيك تقريباً السدس، القير 6 يعطيك السرعة كاملة
+            local ratio = math.clamp(currentGear / 6, 0.16, 1.0)
+            gearTargetSpeed = TuningSettings.maxSpeed * ratio
+        elseif currentGear < 0 then
+            -- سرعة الريوس محدودة (15% من السرعة القصوى، وبحد أقصى 100 كم/س)
+            gearTargetSpeed = math.min(TuningSettings.maxSpeed * 0.15, 100)
+        end
+        
+        local maxForward = (gearTargetSpeed / 3.6) * 3.5
+        
+        -- تسارع البانزين (صار يوقف تلقائياً إذا وصل حد القير الحالي)
+        if thr > 0 and forwardSpeed < maxForward and currentGear ~= 0 then
+            forceMag = TuningSettings.engineTorque * mass * thr * 5
+        end
+        
+        -- الفرامل: حرف S (thr < 0) أو Space (brk > 0) تشتغل كفرامل فقط، وما تسرع السيارة بالريوس أبداً!
+        local brakeInput = brk
+        if thr < 0 then brakeInput = math.max(brakeInput, math.abs(thr)) end
+        
+        if brakeInput > 0 then
+            local decel = TuningSettings.brakeForce * mass * brakeInput * 5
+            if forwardSpeed > 1 then
+                forceMag = -decel
+            elseif forwardSpeed < -1 then
+                forceMag = decel
+            end
+        end
+        
+        -- نطبق قوة الدفع على الاتجاه المسطح بس
+        vf.Force = flatLook * forceMag
+    end)
+end
+
+---------------------------------------------------------
+-- STATUS
+---------------------------------------------------------
+local function SetStatus(text, color)
+    StatusLabel.Text       = text
+    StatusLabel.TextColor3 = color
+    StatusDot.BackgroundColor3 = color
+end
+
+---------------------------------------------------------
+-- DETACH
+---------------------------------------------------------
+local function DetachCar()
+    if AttachLoop then AttachLoop:Disconnect(); AttachLoop = nil end
+    CurrentCar    = nil
+    SmoothedRPM   = 0
+    SmoothedSpeed = 0
+    LiveData.rpm=0; LiveData.speed=0; LiveData.throttle=0
+    LiveData.brake=0; LiveData.boost=0; LiveData.gear="N"
+    UpdateGauges()
+    SetStatus(TR("noVehicle"), Color3.fromRGB(255,100,30))
+end
+
+---------------------------------------------------------
+-- ATTACH
+---------------------------------------------------------
+local function AttachToCar(seat)
+    if AttachLoop then AttachLoop:Disconnect(); AttachLoop = nil end
+
+    local car = seat:FindFirstAncestorWhichIsA("Model")
+        or (seat.Parent and seat.Parent:IsA("Model") and seat.Parent)
+        or seat.Parent
+
+    CurrentCar    = car
+    LastSeatPart  = seat
+    SmoothedRPM   = 0
+    SmoothedSpeed = 0
+
+    local name = (car and car.Name) or seat.Name
+    if #name > 20 then name = name:sub(1,18).."..." end
+    SetStatus(TR("ecu")..name, Color3.fromRGB(50,255,100))
+
+    -- 1. المحاولة الأولى: للسيارات العادية
+    if seat:IsA("VehicleSeat") then
+        pcall(function()
+            seat.MaxSpeed       = TuningSettings.maxSpeed
+            seat.TorqueStrength = TuningSettings.engineTorque
+            seat.BrakeForce     = TuningSettings.brakeForce
+        end)
+    end
+
+    local lastTime = tick()
+    AttachLoop = RunService.Heartbeat:Connect(function()
+        if not seat or not seat.Parent then
+            LastSeatPart = nil
+            DetachCar()
+            return
+        end
+        local now = tick()
+        local dt  = math.min(now - lastTime, 0.1)
+        lastTime  = now
+
+        -- ✅ Force tuning كل frame
+        ForceTuneFrame(seat, dt)
+
+        ReadCarData(seat, dt)
+        UpdateGauges()
+    end)
+end
+
+---------------------------------------------------------
+-- AUTO ATTACH POLLING
+---------------------------------------------------------
+local lastScanTick = 0
+local SCAN_GAP     = 0.3
+
+RunService.Heartbeat:Connect(function()
+    local char = LP.Character
+    if not char then
+        if LastSeatPart ~= nil then DetachCar(); LastSeatPart=nil end
+        return
+    end
+    local hum = char:FindFirstChildWhichIsA("Humanoid")
+    if not hum then
+        if LastSeatPart ~= nil then DetachCar(); LastSeatPart=nil end
+        return
+    end
+
+    -- الطريقة 1: SeatPart مباشرة
+    local sp = hum.SeatPart
+    if sp and sp:IsA("VehicleSeat") then
+        if sp ~= LastSeatPart then
+            LastSeatPart = sp
+            AttachToCar(sp)
+        end
+        return
+    end
+
+    -- الطريقة 2: Occupant scan كل 0.3 ثانية
+    local now = tick()
+    if now - lastScanTick < SCAN_GAP then return end
+    lastScanTick = now
+
+    local foundSeat = nil
+    if sp and not sp:IsA("VehicleSeat") then
+        local car = sp:FindFirstAncestorWhichIsA("Model")
+        if car then
+            local vs = car:FindFirstChildWhichIsA("VehicleSeat", true)
+            foundSeat = vs
+        end
+    end
+    if not foundSeat then
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("VehicleSeat") and obj.Occupant == hum then
+                foundSeat = obj; break
+            end
+        end
+    end
+
+    if foundSeat and foundSeat ~= LastSeatPart then
+        LastSeatPart = foundSeat
+        AttachToCar(foundSeat)
+    elseif not foundSeat and LastSeatPart ~= nil then
+        LastSeatPart = nil
+        DetachCar()
+    end
+end)
+
+---------------------------------------------------------
+-- SETTINGS PANEL
+---------------------------------------------------------
+local SettingsFrame = Instance.new("ScrollingFrame")
+SettingsFrame.Size = UDim2.new(1,-20,1,-70)
+SettingsFrame.Position = UDim2.new(0,10,0,60)
+SettingsFrame.BackgroundTransparency = 1
+SettingsFrame.Visible = false
+SettingsFrame.CanvasSize = UDim2.new(0,0,0,0)
+SettingsFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+SettingsFrame.ScrollBarThickness = 5
+SettingsFrame.Parent = MainFrame
+
+local SLayout = Instance.new("UIListLayout")
+SLayout.Padding = UDim.new(0,7)
+SLayout.Parent  = SettingsFrame
+
+-- References للـ labels اللي تحتاج ترجمة
+local SectionLabels  = {}
+local SettingLabels  = {}
+local ForceTuneBtn   = nil
+local ForceAttachBtn = nil
+
+local function SectionLabel(key)
+    local f = Instance.new("Frame")
+    f.Size = UDim2.new(1,-10,0,26)
+    f.BackgroundColor3 = Color3.fromRGB(50,15,15)
+    f.BorderSizePixel = 0
+    f.Parent = SettingsFrame
+    Instance.new("UICorner",f).CornerRadius = UDim.new(0,4)
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1,0,1,0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = TR(key)
+    lbl.TextColor3 = Color3.fromRGB(255,80,80)
+    lbl.Font = Enum.Font.SourceSansBold; lbl.TextSize = 13
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Position = UDim2.new(0,10,0,0)
+    lbl.Parent = f
+    table.insert(SectionLabels, {lbl=lbl, key=key})
+end
+
+local function SettingRow(labelKey, default, onApply)
+    local Row = Instance.new("Frame")
+    Row.Size = UDim2.new(1,-10,0,44)
+    Row.BackgroundColor3 = Color3.fromRGB(22,22,26)
+    Row.BorderColor3 = Color3.fromRGB(140,20,20)
+    Row.BorderSizePixel = 1
+    Row.Parent = SettingsFrame
+    Instance.new("UICorner",Row).CornerRadius = UDim.new(0,6)
+
+    local Lbl = Instance.new("TextLabel")
+    Lbl.Size = UDim2.new(0.55,0,1,0)
+    Lbl.Position = UDim2.new(0,10,0,0)
+    Lbl.BackgroundTransparency = 1
+    Lbl.Text = TR(labelKey)
+    Lbl.TextColor3 = Color3.fromRGB(255,255,255)
+    Lbl.Font = Enum.Font.SourceSansBold; Lbl.TextSize = 14
+    Lbl.TextXAlignment = Enum.TextXAlignment.Left
+    Lbl.Parent = Row
+    table.insert(SettingLabels, {lbl=Lbl, key=labelKey})
+
+    local TB = Instance.new("TextBox")
+    TB.Size = UDim2.new(0.27,0,0.65,0)
+    TB.Position = UDim2.new(0.58,0,0.175,0)
+    TB.BackgroundColor3 = Color3.fromRGB(8,8,8)
+    TB.BorderColor3 = Color3.fromRGB(200,30,30)
+    TB.Text = tostring(default)
+    TB.TextColor3 = Color3.fromRGB(255,215,0)
+    TB.Font = Enum.Font.SourceSansItalic; TB.TextSize = 18
+    TB.Parent = Row
+    Instance.new("UICorner",TB).CornerRadius = UDim.new(0,4)
+
+    local OKBtn = Instance.new("TextButton")
+    OKBtn.Size = UDim2.new(0.12,0,0.65,0)
+    OKBtn.Position = UDim2.new(0.86,0,0.175,0)
+    OKBtn.BackgroundColor3 = Color3.fromRGB(180,20,20)
+    OKBtn.Text = "OK"; OKBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    OKBtn.Font = Enum.Font.SourceSansBold; OKBtn.TextSize = 13
+    OKBtn.Parent = Row
+    Instance.new("UICorner",OKBtn).CornerRadius = UDim.new(0,4)
+
+    local function Apply()
+        local n = tonumber(TB.Text)
+        if n then
+            onApply(n)
+            OKBtn.BackgroundColor3 = Color3.fromRGB(20,200,60)
+            task.delay(1.5, function()
+                if OKBtn.Parent then OKBtn.BackgroundColor3 = Color3.fromRGB(180,20,20) end
+            end)
+        end
+    end
+    TB.FocusLost:Connect(Apply)
+    OKBtn.MouseButton1Click:Connect(Apply)
+end
+
+-- Engine section
+SectionLabel("secEngine")
+SettingRow("labelMaxRPM",   TuningSettings.maxRPM,       function(v) TuningSettings.maxRPM=v end)
+SettingRow("labelBoost",    TuningSettings.targetBoost,  function(v) TuningSettings.targetBoost=v end)
+SettingRow("labelLaunch",   TuningSettings.launchRPM,    function(v) TuningSettings.launchRPM=v end)
+SettingRow("labelTorque",   TuningSettings.engineTorque, function(v) TuningSettings.engineTorque=v end)
+
+-- Chassis section
+SectionLabel("secChassis")
+SettingRow("labelMaxSpeed",  TuningSettings.maxSpeed,   function(v) TuningSettings.maxSpeed=v end)
+SettingRow("labelBrake",     TuningSettings.brakeForce, function(v) TuningSettings.brakeForce=v end)
+
+-- Live override section
+SectionLabel("secOverride")
+SettingRow("labelFuel",     100, function(v) LiveData.fuel=math.clamp(v,0,100) end)
+SettingRow("labelAirTemp",  32,  function(v) LiveData.airTemp=v end)
+SettingRow("labelEthanol",  0,   function(v) LiveData.ethanol=math.clamp(v,0,100) end)
+
+-- ✅ Force Tuning Button
+ForceTuneBtn = Instance.new("TextButton")
+ForceTuneBtn.Size = UDim2.new(1,-10,0,48)
+ForceTuneBtn.BackgroundColor3 = Color3.fromRGB(180,20,20)
+ForceTuneBtn.BorderSizePixel = 0
+ForceTuneBtn.Text = TR("forceTuning")
+ForceTuneBtn.TextColor3 = Color3.fromRGB(255,255,255)
+ForceTuneBtn.Font = Enum.Font.SourceSansBold; ForceTuneBtn.TextSize = 16
+ForceTuneBtn.Parent = SettingsFrame
+Instance.new("UICorner",ForceTuneBtn).CornerRadius = UDim.new(0,8)
+
+ForceTuneBtn.MouseButton1Click:Connect(function()
+    TuningActive = not TuningActive
+    if TuningActive then
+        ForceTuneBtn.BackgroundColor3 = Color3.fromRGB(20,180,60)
+        ForceTuneBtn.Text = TR("tuningOn")
+    else
+        ForceTuneBtn.BackgroundColor3 = Color3.fromRGB(180,20,20)
+        ForceTuneBtn.Text = TR("forceTuning")
+    end
+end)
+
+-- Manual Attach Button
+ForceAttachBtn = Instance.new("TextButton")
+ForceAttachBtn.Size = UDim2.new(1,-10,0,40)
+ForceAttachBtn.BackgroundColor3 = Color3.fromRGB(25,10,10)
+ForceAttachBtn.BorderColor3 = Color3.fromRGB(200,50,50)
+ForceAttachBtn.BorderSizePixel = 1
+ForceAttachBtn.Text = TR("forceAttach")
+ForceAttachBtn.TextColor3 = Color3.fromRGB(255,120,120)
+ForceAttachBtn.Font = Enum.Font.SourceSansBold; ForceAttachBtn.TextSize = 15
+ForceAttachBtn.Parent = SettingsFrame
+Instance.new("UICorner",ForceAttachBtn).CornerRadius = UDim.new(0,6)
+
+ForceAttachBtn.MouseButton1Click:Connect(function()
+    local char = LP.Character
+    if not char then return end
+    local hum = char:FindFirstChildWhichIsA("Humanoid")
+    if hum and hum.SeatPart and hum.SeatPart:IsA("VehicleSeat") then
+        AttachToCar(hum.SeatPart)
+    else
+        SetStatus(TR("noSeat"), Color3.fromRGB(255,60,60))
+    end
+end)
+
+---------------------------------------------------------
+-- TABS
+---------------------------------------------------------
+local TabButtons  = {}
+local TabDefs = {
+    {key="D1",  label="tabD1"},
+    {key="D2",  label="tabD2"},
+    {key="Set", label="tabSet"},
+}
+local TX = 150
+
+local TabLabelRefs = {}  -- للترجمة لاحقاً
+
+for _, td in ipairs(TabDefs) do
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(0,90,0,30)
+    Btn.Position = UDim2.new(0,TX,0.5,-15)
+    Btn.BackgroundColor3 = Color3.fromRGB(20,20,24)
+    Btn.BorderColor3 = Color3.fromRGB(180,20,20)
+    Btn.BorderSizePixel = 1
+    Btn.Text = TR(td.label)
+    Btn.TextColor3 = Color3.fromRGB(255,255,255)
+    Btn.Font = Enum.Font.SourceSansBold; Btn.TextSize = 13
+    Btn.Parent = TopBar
+    Instance.new("UICorner",Btn).CornerRadius = UDim.new(0,6)
+
+    TabButtons[td.key] = Btn
+    table.insert(TabLabelRefs, {btn=Btn, key=td.label})
+    TX = TX + 98
+
+    Btn.MouseButton1Click:Connect(function()
+        CurrentDisplay = td.key
+        for k, b in pairs(TabButtons) do
+            b.BackgroundColor3 = (k==td.key) and Color3.fromRGB(160,20,20) or Color3.fromRGB(20,20,24)
+        end
+        if td.key == "Set" then
+            GridFrame.Visible = false
+            SettingsFrame.Visible = true
+        else
+            SettingsFrame.Visible = false
+            RefreshDisplay(td.key)
+        end
+    end)
+end
+
+---------------------------------------------------------
+-- LANGUAGE TOGGLE
+---------------------------------------------------------
+local function ApplyLanguage()
+    -- Status
+    if CurrentCar == nil then
+        StatusLabel.Text = TR("noVehicle")
+    end
+    -- Lang button
+    LangBtn.Text = TR("langBtn")
+    -- Tabs
+    for _, ref in ipairs(TabLabelRefs) do
+        ref.btn.Text = TR(ref.key)
+    end
+    -- Section labels
+    for _, ref in ipairs(SectionLabels) do
+        ref.lbl.Text = TR(ref.key)
+    end
+    -- Setting labels
+    for _, ref in ipairs(SettingLabels) do
+        ref.lbl.Text = TR(ref.key)
+    end
+    -- Buttons
+    if ForceTuneBtn then
+        ForceTuneBtn.Text = TuningActive and TR("tuningOn") or TR("forceTuning")
+    end
+    if ForceAttachBtn then
+        ForceAttachBtn.Text = TR("forceAttach")
+    end
+end
+
+LangBtn.MouseButton1Click:Connect(function()
+    Lang = (Lang == "AR") and "EN" or "AR"
+    ApplyLanguage()
+end)
+
+---------------------------------------------------------
+-- CLOCK
+---------------------------------------------------------
+RunService.Heartbeat:Connect(function()
+    local t = os.date("*t")
+    ClockText.Text = string.format("%02d:%02d", t.hour, t.min)
+end)
+
+---------------------------------------------------------
+-- STARTUP
+---------------------------------------------------------
+RefreshDisplay("D1")
+TabButtons["D1"].BackgroundColor3 = Color3.fromRGB(160,20,20)
